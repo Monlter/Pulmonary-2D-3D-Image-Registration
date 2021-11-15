@@ -14,29 +14,52 @@ np.set_printoptions(suppress=True)
 args = get_args()
 
 
+
+
 def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name,
               lossFuntionMethodName=args.common_lossfunction_name):
     in_channels = get_dataMethod_num(dataMethodName)
     model_methods = {
         "CNN": CNN_model.CNN_net(in_channels),
         "Unet": Unet_model.UNet_net(in_channels, 3),
-        "Resnet": Resnet_attention.resnet(in_channels),
-        "Resnet_out_Triplet": Resnet_Triplet_atttention.resnet(in_channels, is_Triplet=True),
-        "Resnet_out_CBAM": Resnet_attention.resnet(in_channels, is_CBAM=True),
-        "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
-        "Resnet_out_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3),
-        "Resnet_out_SPA": Resnet_attention.resnet(in_channels, is_SPA=True),
-        "Resnet_inline_CBAM":Resnet_attention.resnet(in_channels,is_inlineAttention="CBAM"),
-        "Resnet_inline_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA"),
-        "Resnet_all_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA",is_SPA=True),
-        "Resnet_all_CBAM": Resnet_attention.resnet(in_channels, is_inlineAttention="CBAM",is_CBAM=True),
-        "Resnet_inline_SPA_out_CBAM": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA", is_CBAM=True),
-        "Resnet_inline_CBAM_out_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="CBAM", is_SPA=True),
+        "Resnet": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2]),
+        "Resnet_outTriplet": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="Triplet"),
+        "Resnet_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM"),
+        "Resnet_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], dilation=3),
+        "Resnet_outSPA_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA",
+                                                          dilation=3),
+        "Resnet_outCBAM_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM",
+                                                           dilation=3),
+        "Resnet_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA"),
+        "Resnet_inCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM"),
+        "Resnet_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SE"),
+        "Resnet_inSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA"),
+        "Resnet_inSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE"),
+        "Resnet_allSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                 is_outAttention="SPA"),
+        "Resnet_allCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                  is_outAttention="CBAM"),
+        "Resnet_allSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                is_outAttention="SE"),
+        "Resnet_inSPA_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                        is_outAttention="CBAM"),
+        "Resnet_inCBAM_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                        is_outAttention="SPA"),
+        "Resnet_inCBAM_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                       is_outAttention="SE"),
+        "Resnet_inSPA_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                      is_outAttention="SE"),
+        "Resnet_inSE_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                      is_outAttention="SPA"),
+        "Resnet_inSE_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                       is_outAttention="CBAM"),
     }
     root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     file_name = get_filename(__file__)
     num_cp = get_fileNum(file_name)
     testName = get_testName(__file__)
+    pca_components_path = os.path.join(root_path,args.dvf_trans_pca,"PCA_components_(3,29491200)")
+    pca_mean_path = os.path.join(root_path,args.dvf_trans_pca,"PCA_mean_(29491200,)")
     workFileName = methodsName_combine(num_cp, modelMethodName, dataMethodName, lossFuntionMethodName)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +68,7 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
                                    str(args.EPOCH) + ".pth")
     model.load_state_dict(torch.load(load_model_file),strict=False)
     experiment_dir = get_experimentDir(num_cp, root_path, testName,
-                                       args.gen_pca_method)  # "PCA/Experiment/Test1/PCA_origin/"
+                                       args.gen_pca_method)  # "Pulmonary-2D-3D-Image-Registration/Experiment/Test1/PCA_origin/"
     log_dir = make_dir(os.path.join(experiment_dir, "log/"))
     logger = get_logger(log_dir + workFileName + "_val.log",1,workFileName)
 
@@ -60,6 +83,8 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
     logger.info(
         "Experiment:" + str(testName) + "\tdata_method:" + str(args.gen_pca_method) + "\tmodel:" + str(
             modelMethodName) + '\tdataMethod:' + str(dataMethodName))
+
+    # 开始运行
     for val_name in val_files:
         with torch.no_grad():
             img = load_odd_file(os.path.join(val_img_folder, val_name)).reshape((100, 240, 300))
@@ -71,6 +96,12 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
             pca = load_odd_file(os.path.join(val_target_folder, pca_name))
             prediction = model(input_img.to(device))
             prediction = prediction[0].cpu().detach().numpy()
+            # 保存pca_trans_dvf
+            pca_components = load_odd_file(pca_components_path).reshape(3,29491200)
+            pca_mean = load_odd_file(pca_mean_path)
+            predict_dvf = pca_trans_origin(prediction,pca_components,pca_mean)
+            file_save(predict_dvf,"predict_dvf_"+img_number,os.path.join(root_path,args.predict_dvf,workFileName))
+            # 保存log文件
             print(val_name)
             print("prediction:", prediction, "orgin:", pca)
             sub_value = prediction - pca
@@ -86,32 +117,13 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
 
 
 if __name__ == '__main__':
-
-    recode_progressNum(1)
-    exam_test(modelMethodName="CNN")
-    recode_progressNum(2)
-    exam_test(modelMethodName="Unet")
-    recode_progressNum(3)
-    exam_test(modelMethodName="Resnet")
-    recode_progressNum(4)
-    exam_test(modelMethodName="Resnet_out_Triplet")
+    # recode_progressNum(1)
+    # exam_test(modelMethodName="CNN")
+    # recode_progressNum(2)
+    # exam_test(modelMethodName="Unet")
+    # recode_progressNum(3)
+    # exam_test(modelMethodName="Resnet")
+    # recode_progressNum(4)
+    # exam_test(modelMethodName="Resnet_dilation")
     recode_progressNum(5)
-    exam_test(modelMethodName="Resnet_out_CBAM")
-    recode_progressNum(6)
-    exam_test(modelMethodName="Resnet_dilation")
-    recode_progressNum(7)
-    exam_test(modelMethodName="Resnet_out_CBAM_dilation")
-    recode_progressNum(8)
-    exam_test(modelMethodName="Resnet_out_SPA")
-    recode_progressNum(9)
-    exam_test(modelMethodName="Resnet_inline_CBAM")
-    recode_progressNum(10)
-    exam_test(modelMethodName="Resnet_inline_SPA")
-    recode_progressNum(11)
-    exam_test(modelMethodName="Resnet_all_SPA")
-    recode_progressNum(12)
-    exam_test(modelMethodName="Resnet_all_CBAM")
-    recode_progressNum(13)
-    exam_test(modelMethodName="Resnet_inline_SPA_out_CBAM")
-    recode_progressNum(14)
-    exam_test(modelMethodName="Resnet_inline_CBAM_out_SPA")
+    exam_test(modelMethodName="Resnet_outCBAM")
