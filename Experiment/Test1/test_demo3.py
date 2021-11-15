@@ -33,7 +33,7 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
         "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
         "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3)
     }
-    root_path = get_poject_path("PCA")
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     file_name = get_filename(__file__)
     num_cp = get_fileNum(file_name)
     testName = get_testName(__file__)

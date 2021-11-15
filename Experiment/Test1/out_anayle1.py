@@ -64,7 +64,7 @@ def pd_save_csv(log_list):
 
 if __name__ == '__main__':
     args = get_args()
-    root_path = get_poject_path("PCA")
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     num_cp = get_fileNum(get_filename(__file__))
     testName = get_testName(__file__)  # TEST1
     experiment_dir = get_experimentDir(num_cp, root_path, testName,

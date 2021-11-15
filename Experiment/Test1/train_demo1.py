@@ -66,7 +66,7 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
     if not modelMethodName:
         modelMethodName = args.common_model_name
-    root_path = get_poject_path("PCA")
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     workFileName = methodsName_combine(num_cp, modelMethodName, dataMethodName, lossFuntionMethodName)
     # 实验路径（"PCA/Experiment/Test1/PCA_origin/"）：——> 用于生成log和run文件夹
     experiment_dir = get_experimentDir(num_cp, root_path, testName, args.gen_pca_method)

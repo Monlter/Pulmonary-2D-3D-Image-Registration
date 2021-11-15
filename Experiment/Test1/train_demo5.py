@@ -58,7 +58,7 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
     if not modelMethodName:
         modelMethodName = args.common_model_name
-    root_path = get_poject_path("PCA")
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     workFileName = methodsName_combine(num_cp, modelMethodName, dataMethodName, lossFuntionMethodName)
     if imgFolder == args.img_folder:
         workFileName = "raw_"+workFileName
