@@ -36,10 +36,10 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
         "CNN": CNN_model.CNN_net(in_channels),
         "Unet": Unet_model.UNet_net(in_channels, 3),
         "Resnet": Resnet_attention.resnet(in_channels),
-        "Resnet_Triplet":Resnet_Triplet_atttention.resnet(in_channels,is_Triplet=True),
-        "Resnet_CBAM":Resnet_attention.resnet(in_channels,is_CBAM=True),
-        "Resnet_dilation":Resnet_attention.resnet(in_channels,dilation=3),
-        "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels,is_CBAM=True, dilation=3)
+        "Resnet_Triplet": Resnet_Triplet_atttention.resnet(in_channels, is_Triplet=True),
+        "Resnet_CBAM": Resnet_attention.resnet(in_channels, is_CBAM=True),
+        "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
+        "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3)
     }
     # 损失函数方式
     lossfunction_methods = {

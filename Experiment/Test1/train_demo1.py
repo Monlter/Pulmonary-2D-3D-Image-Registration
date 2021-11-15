@@ -3,6 +3,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tools.data_loader import Dataset_variable
 from torch.utils.data import DataLoader
 import math
+import time
 import os
 import logging
 from tools.loss_tool import PCA_loss, Log_cosh, PCA_smoothL1Loss
@@ -16,7 +17,6 @@ from Model import *
 
 args = get_args()
 
-
 def val(Dataset_loader, net, loss_function, device):
     val_loss = 0
     with torch.no_grad():
@@ -29,27 +29,33 @@ def val(Dataset_loader, net, loss_function, device):
     return (val_loss / (i + 1))
 
 
-def train(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name,
-          lossFuntionMethodName=args.common_lossfunction_name):
+def train(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name, lossFuntionMethodName=args.common_lossfunction_name):
     # 初始化
     in_channels = get_dataMethod_num(dataMethodName)
     # 模型方式
     model_methods = {
         "CNN": CNN_model.CNN_net(in_channels),
         "Unet": Unet_model.UNet_net(in_channels, 3),
-        "Resnet": Resnet_attention.resnet(in_channels),
-        "Resnet_Triplet": Resnet_Triplet_atttention.resnet(in_channels, is_Triplet=True),
-        "Resnet_CBAM": Resnet_attention.resnet(in_channels, is_CBAM=True),
-        "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
-        "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3),
-        "Resnet_SPA": Resnet_attention.resnet(in_channels, is_SPA=True),
-        "Resnet_inlineAttention_CBAM":Resnet_attention.resnet(in_channels,is_inlineAttention="CBAM"),
-        "Resnet_inlineAttention_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA"),
-        "Resnet_allAttention_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA",is_SPA=True),
-        "Resnet_allAttention_CBAM": Resnet_attention.resnet(in_channels, is_inlineAttention="CBAM",is_CBAM=True),
-        "Resnet_inline_SPA_out_CBAM": Resnet_attention.resnet(in_channels, is_inlineAttention="SPA", is_CBAM=True),
-        "Resnet_inline_CBAM_out_SPA": Resnet_attention.resnet(in_channels, is_inlineAttention="CBAM", is_SPA=True),
-
+        "Resnet": Resnet_attention.resnet(in_channels,layers=[2,2,2,2]),
+        "Resnet_outTriplet": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2],  is_outAttention="Triplet"),
+        "Resnet_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM"),
+        "Resnet_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], dilation=3),
+        "Resnet_outSPA_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA", dilation=3),
+        "Resnet_outCBAM_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM", dilation=3),
+        "Resnet_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA"),
+        "Resnet_inCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM"),
+        "Resnet_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SE"),
+        "Resnet_inSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA"),
+        "Resnet_inSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE"),
+        "Resnet_allSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA", is_outAttention="SPA"),
+        "Resnet_allCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM", is_outAttention="CBAM"),
+        "Resnet_allSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",is_outAttention="SE"),
+        "Resnet_inSPA_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA", is_outAttention="CBAM"),
+        "Resnet_inCBAM_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM", is_outAttention="SPA"),
+        "Resnet_inCBAM_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",is_outAttention="SE"),
+        "Resnet_inSPA_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",is_outAttention="SE"),
+        "Resnet_inSE_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE", is_outAttention="SPA"),
+        "Resnet_inSE_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE", is_outAttention="CBAM"),
     }
     # 损失函数方式
     lossfunction_methods = {
@@ -76,9 +82,9 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
     tensorboard_dir = make_dir(os.path.join(experiment_dir, 'run/'))
     # 保存路径：——> 用于保存训练的权重文件
     save_dir = get_savedir(num_cp, root_path, testName, args.gen_pca_method, workFileName)
-    # 生成log文件
+
     logger = get_logger(log_dir + workFileName + "_train.log", 1, workFileName)
-    # 生成run文件
+
     writer = SummaryWriter(tensorboard_dir + workFileName)
 
     # 超参数设定
@@ -135,7 +141,7 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
                                                                           val_loss.item()))
         writer.add_scalars("train_progress", {"train_loss": loss_mse.item(), "val_loss": val_loss.item()})
 
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 150 == 0:
             save_file_name = str(save_dir + str(epoch + 1) + ".pth")
             torch.save(model.state_dict(), save_file_name)
 
@@ -145,18 +151,79 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
 
 if __name__ == '__main__':
-    train(modelMethodName="Resnet_SPA")
-    # recode_progressNum(1)
-    # train(modelMethodName="Resnet_Triplet")
-    # recode_progressNum(2)
-    # train(modelMethodName="Resnet")
-    # recode_progressNum(3)
-    # train(modelMethodName="CNN")
-    # recode_progressNum(4)
-    # train(modelMethodName="Unet")
-    # recode_progressNum(5)
-    # train(modelMethodName="Resnet_CBAM")
-    # recode_progressNum(6)
-    # train(modelMethodName="Resnet_dilation")
-    # recode_progressNum(7)
-    # train(modelMethodName="Resnet_CBAM_dilation")
+    print("-"*100)
+    print("progress_1", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="CNN")
+    print("-" * 100)
+    print("progress_2", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Unet")
+    print("-" * 100)
+    print("progress_3", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) )
+    train(modelMethodName="Resnet")
+    print("-" * 100)
+    # print("progress_4", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) )
+    # train(modelMethodName="Resnet_outTriplet")
+    print("-" * 100)
+    print("progress_5", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) )
+    train(modelMethodName="Resnet_outCBAM")
+    print("-" * 100)
+    print("progress_6", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) )
+    train(modelMethodName="Resnet_dilation")
+    print("-" * 100)
+    print("progress_7", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) )
+    train(modelMethodName="Resnet_outSPA_dilation")
+    print("-" * 100)
+    print("progress_7", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_outCBAM_dilation")
+    print("-" * 100)
+    print("progress_9", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_outSPA")
+    print("-" * 100)
+    print("progress_10", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inCBAM")
+    print("-" * 100)
+    print("progress_11", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSPA")
+    print("-" * 100)
+    print("progress_12", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_allSPA")
+    print("-" * 100)
+    print("progress_13", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_allCBAM")
+    print("-" * 100)
+    print("progress_14", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSPA_outCBAM")
+    print("-" * 100)
+    print("progress_15", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inCBAM_outSPA")
+    print("-" * 100)
+    print("progress_16", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_outSE")
+    print("-" * 100)
+    print("progress_17", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSE")
+    print("-" * 100)
+    print("progress_18", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_allSE")
+    print("-" * 100)
+    print("progress_19", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSPA_outSE")
+    print("-" * 100)
+    print("progress_20", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSE_outSPA")
+    print("-" * 100)
+    print("progress_21", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inCBAM_outSE")
+    print("-" * 100)
+    print("progress_22", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    train(modelMethodName="Resnet_inSE_outCBAM")
+
+
+
+
+
+
+
+
+
+

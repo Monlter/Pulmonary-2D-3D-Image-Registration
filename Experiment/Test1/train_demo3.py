@@ -138,12 +138,18 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
 if __name__ == '__main__':
     recode_progressNum(1)
-    train(dataMethodName="origin",modelMethodName="CNN")
+    train(dataMethodName="origin", modelMethodName="CNN")
     recode_progressNum(2)
-    train(dataMethodName="sub",modelMethodName="CNN")
+    train(dataMethodName="sub", modelMethodName="CNN")
     recode_progressNum(3)
-    train(dataMethodName="edge",modelMethodName="CNN")
+    train(dataMethodName="edge", modelMethodName="CNN")
     recode_progressNum(4)
-    train(dataMethodName="multiAngle",modelMethodName="CNN")
-
-
+    train(dataMethodName="multiAngle", modelMethodName="CNN")
+    recode_progressNum(5)
+    train(dataMethodName="origin", modelMethodName="Unet")
+    recode_progressNum(6)
+    train(dataMethodName="sub", modelMethodName="Unet")
+    recode_progressNum(7)
+    train(dataMethodName="edge", modelMethodName="Unet")
+    recode_progressNum(8)
+    train(dataMethodName="multiAngle", modelMethodName="Unet")

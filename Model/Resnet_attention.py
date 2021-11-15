@@ -86,7 +86,7 @@ class SPPLayer(torch.nn.Module):
         self.pool_type = pool_type
 
     def forward(self, x):
-        num, c, h, w = x.size()  # num:样本数量 c:通道数 h:高 w:宽
+        num, c, h, w = x.size()  # num:Ñù±¾ÊýÁ¿ c:Í¨µÀÊý h:¸ß w:¿í
         for i in range(self.num_levels):
             level = i + 1
             kernel_size = (math.ceil(h / level), math.ceil(w / level))
@@ -94,13 +94,13 @@ class SPPLayer(torch.nn.Module):
             pooling = (
                 math.floor((kernel_size[0] * level - h + 1) / 2), math.floor((kernel_size[1] * level - w + 1) / 2))
 
-            # 选择池化方式
+            # Ñ¡Ôñ³Ø»¯·½Ê½
             if self.pool_type == 'max_pool':
                 tensor = F.max_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
             if self.pool_type == 'avg_pool':
                 tensor = F.avg_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
 
-            # 展开、拼接
+            # Õ¹¿ª¡¢Æ´½Ó
             if (i == 0):
                 SPP = tensor.view(num, -1)
             else:
@@ -197,6 +197,28 @@ class TripletAttention(nn.Module):
 
 """
 Triplet attention-----end-----------------------------------------------------------------------------------------------
+SE attention ---start---------------------------------------------------------------------------------------------
+"""
+
+
+class SE_attention(nn.Module):
+
+    def __init__(self, in_chnls, ratio=16):
+        super(SE_attention, self).__init__()
+        self.squeeze = nn.AdaptiveAvgPool2d((1, 1))
+        self.compress = nn.Conv2d(in_chnls, in_chnls // ratio, 1, 1, 0)
+        self.excitation = nn.Conv2d(in_chnls // ratio, in_chnls, 1, 1, 0)
+
+    def forward(self, x):
+        out = self.squeeze(x)
+        out = self.compress(out)
+        out = F.relu(out)
+        out = self.excitation(out)
+        return F.sigmoid(out)
+
+
+"""
+SE attention-----end-----------------------------------------------------------------------------------------------
 
 Resnet Model----start----------------------------------------------------------------------------------------------
 """
@@ -212,14 +234,9 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 class Bottleneck(nn.Module):
     expansion = 4
-    _attention_methods = {
-        "CBAM":CBAM_attention,
-        "SPA":SPAnet,
-        "Triplet":TripletAttention
-    }
-    def __init__(self, inplanes, planes, stride=1, downsample=None, is_inlineAttention=None):
+    def __init__(self, inplanes, planes, stride=1, downsample=None,_attention_methods=None, is_inlineAttention=None):
         super(Bottleneck, self).__init__()
-        self.__dict__.update(self._attention_methods)
+        self._attention_methods = _attention_methods
         self.is_inlineAttention = is_inlineAttention
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -231,8 +248,7 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
         if self.is_inlineAttention:
-            self.attention_method = self._attention_methods[self.is_inlineAttention](planes * 4)
-
+            self.inlineAttention = self._attention_methods[self.is_inlineAttention](planes * 4)
 
     def forward(self, x):
         residual = x
@@ -249,7 +265,7 @@ class Bottleneck(nn.Module):
         out = self.bn3(out)
 
         if self.is_inlineAttention:
-            self.attention_method(out) * out
+            self.inlineAttention(out) * out
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -261,25 +277,30 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-
-    def __init__(self, block, layers, num_classes, in_dim, is_CBAM, dilation, is_SPA, is_inlineAttention):
+    _attention_methods = {
+        "CBAM": CBAM_attention,
+        "SPA": SPAnet,
+        "Triplet": TripletAttention,
+        "SE": SE_attention
+    }
+    def __init__(self, block, layers, num_classes, in_dim, dilation, is_outAttention=None, is_inlineAttention=None):
         self.inplanes = 64
         super(ResNet, self).__init__()
+        self.__dict__.update(self._attention_methods)
         self.conv1 = nn.Conv2d(in_dim, 64, kernel_size=7, stride=2, padding=3, bias=False, dilation=dilation)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
-        self.CBAM = is_CBAM
-        self.is_SPA = is_SPA
+        self.is_outAttention = is_outAttention
         self.is_inlineAttention = is_inlineAttention
-        self.cbam1 = CBAM_attention(self.inplanes)
-        self.spa1 = SPAnet(self.inplanes)
+        if self.is_outAttention:
+            self.outAttention_1 = self._attention_methods[self.is_outAttention](self.inplanes)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.cbam2 = CBAM_attention(self.inplanes)
-        self.spa2 = SPAnet(self.inplanes)
+        if self.is_outAttention:
+            self.outAttention_2 = self._attention_methods[self.is_outAttention](self.inplanes)
         if dilation == 1:
             self.fc1 = nn.Linear(512 * block.expansion * 4 * 4, 512 * block.expansion)
         elif dilation == 3:
@@ -302,7 +323,7 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(planes * block.expansion),
             )
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, is_inlineAttention=self.is_inlineAttention))
+        layers.append(block(self.inplanes, planes, stride, downsample, _attention_methods=self._attention_methods, is_inlineAttention=self.is_inlineAttention))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes))
@@ -313,34 +334,29 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        if self.CBAM:
-            self.cbam1(x) * x
-        if self.is_SPA:
-            x = self.spa1(x) * x
+        if self.is_outAttention:
+            x = self.outAttention_1(x) * x
         x = self.maxpool(x)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        if self.CBAM:
-            x = self.cbam2(x) * x
-        if self.is_SPA:
-            x = self.spa2(x) * x
+        if self.is_outAttention:
+            x = self.outAttention_2(x) * x
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
         logits = self.fc2(x)
         return logits
 
 
-def resnet(in_channel, layers=[3, 4, 6, 3], is_CBAM=False, dilation=1, is_SPA=False, is_inlineAttention=None):
+def resnet(in_channel, layers=[3, 4, 6, 3],  dilation=1, is_outAttention=None, is_inlineAttention=None):
     """Constructs a ResNet-34 model."""
     model = ResNet(block=Bottleneck,
                    layers=layers,
                    num_classes=3,
                    in_dim=in_channel,
-                   is_CBAM=is_CBAM,
                    dilation=dilation,
-                   is_SPA=is_SPA,
+                   is_outAttention=is_outAttention,
                    is_inlineAttention=is_inlineAttention)
     return model
 

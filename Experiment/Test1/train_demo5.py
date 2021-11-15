@@ -11,7 +11,7 @@ import numpy as np
 
 from tools.tool_functions import *
 from torch.utils.tensorboard import SummaryWriter
-# 加载各类模型
+# ¼ÓÔØ¸÷ÀàÄ£ÐÍ
 from Model import *
 
 args = get_args()
@@ -31,9 +31,9 @@ def val(Dataset_loader, net, loss_function, device):
 
 def train(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name,
           lossFuntionMethodName=args.common_lossfunction_name, imgFolder=args.img_folder):
-    # 初始化
+    # ³õÊ¼»¯
     in_channels = get_dataMethod_num(dataMethodName)
-    # 模型方式
+    # Ä£ÐÍ·½Ê½
     model_methods = {
         "CNN": CNN_model.CNN_net(in_channels),
         "Unet": Unet_model.UNet_net(in_channels, 3),
@@ -43,13 +43,13 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
         "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
         "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3)
     }
-    # 损失函数方式
+    # ËðÊ§º¯Êý·½Ê½
     lossfunction_methods = {
         "MSE": PCA_loss,
         "Smooth_MSE": PCA_smoothL1Loss,
         "log_cosh": Log_cosh
     }
-    # 获取当前训练的实验号
+    # »ñÈ¡µ±Ç°ÑµÁ·µÄÊµÑéºÅ
     file_name = get_filename(__file__)
     num_cp = get_fileNum(file_name)
     testName = get_testName(__file__)
@@ -66,20 +66,20 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
         workFileName = "noise_" + workFileName
     elif imgFolder.split("_")[-1] == "all":
         workFileName = "all_" + workFileName
-    # 实验路径（"PCA/Experiment/Test1/PCA_origin/"）：——> 用于生成log和run文件夹
+    # ÊµÑéÂ·¾¶£¨"PCA/Experiment/Test1/PCA_origin/"£©£º¡ª¡ª> ÓÃÓÚÉú³ÉlogºÍrunÎÄ¼þ¼Ð
     experiment_dir = get_experimentDir(num_cp, root_path, testName, args.gen_pca_method)
-    # log文件夹
+    # logÎÄ¼þ¼Ð
     log_dir = make_dir(os.path.join(experiment_dir, 'log/'))
-    # run文件夹
+    # runÎÄ¼þ¼Ð
     tensorboard_dir = make_dir(os.path.join(experiment_dir, 'run/'))
-    # 保存路径：——> 用于保存训练的权重文件
+    # ±£´æÂ·¾¶£º¡ª¡ª> ÓÃÓÚ±£´æÑµÁ·µÄÈ¨ÖØÎÄ¼þ
     save_dir = get_savedir(num_cp, root_path, testName, args.gen_pca_method, workFileName)
-    # 生成log文件
+    # Éú³ÉlogÎÄ¼þ
     logger = get_logger(log_dir + workFileName + "_train.log", 1, workFileName)
-    # 生成run文件
+    # Éú³ÉrunÎÄ¼þ
     writer = SummaryWriter(tensorboard_dir + workFileName)
 
-    # 超参数设定
+    # ³¬²ÎÊýÉè¶¨
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = model_methods[modelMethodName].to(device)
     batch_size = args.batch_size
@@ -87,7 +87,7 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
     scheduler = ReduceLROnPlateau(opt, mode='min', verbose=1, patience=3)
     wcoeff = torch.FloatTensor([2 / math.sqrt(6), 1 / math.sqrt(6), 1 / math.sqrt(6)]).to(device)
     loss_fn = lossfunction_methods[lossFuntionMethodName](wcoeff)
-    # 数据加载
+    # Êý¾Ý¼ÓÔØ
     img_folder = os.path.join(root_path, imgFolder)
     target_folder = os.path.join(root_path, args.target_folder)
     PCA_all_folder = os.path.join(root_path, args.PCA_all_folder)
@@ -101,7 +101,7 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
     train_data_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     test_data_loader = DataLoader(test_dataset, shuffle=True, batch_size=batch_size)
 
-    # 训练参数设定
+    # ÑµÁ·²ÎÊýÉè¶¨
     logger.info(
         "Experiment:" + str(testName) + "\tdata_method:" + str(args.gen_pca_method) + "\tmodel:" + str(
             modelMethodName) + '\tdataMethod:' + str(dataMethodName) + '\tloss_function:' + str(lossfunction_methods))
@@ -118,8 +118,8 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
             prediction = model(img)
             loss_item = loss_fn(target, prediction)
             loss_mse += loss_item
-            opt.zero_grad()  # 清空上一步残余更新参数值
-            loss_item.backward()  # 误差反向传播，计算参数更新值
+            opt.zero_grad()  # Çå¿ÕÉÏÒ»²½²ÐÓà¸üÐÂ²ÎÊýÖµ
+            loss_item.backward()  # Îó²î·´Ïò´«²¥£¬¼ÆËã²ÎÊý¸üÐÂÖµ
             opt.step()
             print("(epoch:%d--step:%d)------->loss:%.3f" % (epoch, i, loss_item.item()))
         loss_mse = loss_mse / (i + 1)

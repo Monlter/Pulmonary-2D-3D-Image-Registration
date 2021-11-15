@@ -8,6 +8,7 @@ import os
 class CNN_net(nn.Module):
     def __init__(self,in_channels):
         super(CNN_net, self).__init__()
+        self.in_channels = in_channels
         self.conv1 = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels=in_channels,
                             out_channels=8,
