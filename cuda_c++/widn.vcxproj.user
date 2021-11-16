@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>-size 256x256x150 -view1 100  -voxelsize 1.0 -itnum 30 -dsize1 300x240x100  -binsize 1.0 -geo 750 500 -pos 75 0 -orbit 1 4d_lung_phantom_w_lesion_atn_1.bin  4d_lung_phantom_w_lesion_atn_3.256x150.300x240x20.noi    new_anglefile_100angle   result.img</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>G:\Monlter\widn\data</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+</Project>
