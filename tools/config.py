@@ -25,6 +25,8 @@ def get_args():
     parser.add_argument('--gen_pca_method', type=str, default='PCA_origin', dest='gen_pca_method')
     parser.add_argument("--dvf_trans_pca", type=str,default="Dataset/Test_9dvf/DVF_trans_PCAs")
     parser.add_argument("--predict_dvf", type=str, default="Dataset/Test_9dvf/Output/dvf",dest="predict_dvf")
+    parser.add_argument("--predict_ct", type=str, default="Dataset/Test_9dvf/Output/CT", dest="predict_ct")
+    parser.add_argument("--real_ct", type=str, default="Dataset/Origin/CT", dest="real_ct")
     parser.add_argument('--cam_method', type=str, default='gradcam',
                         choices=['gradcam', 'gradcam++', 'scorecam', 'xgradcam',
                                  'ablationcam', 'eigencam', 'eigengradcam'],
