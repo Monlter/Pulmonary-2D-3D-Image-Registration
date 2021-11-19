@@ -69,8 +69,8 @@ if __name__ == '__main__':
     testName = get_testName(__file__)  # TEST1
     experiment_dir = get_experimentDir(num_cp, root_path, testName,
                                        args.gen_pca_method)  # E:\code\pycharm\PCA\Experiment\Test1/PCA_origin/model_cp
-    log_path = os.path.join(experiment_dir, "log2")
-    out_dir = os.path.join(experiment_dir, "anayle")
+    log_path = os.path.join(experiment_dir, "log")
+    out_dir = os.path.join(experiment_dir, "anayle/loss_out_csv")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

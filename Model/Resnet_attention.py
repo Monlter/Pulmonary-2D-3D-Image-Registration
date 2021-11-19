@@ -362,6 +362,6 @@ def resnet(in_channel, layers=[3, 4, 6, 3],  dilation=1, is_outAttention=None, i
 
 
 if __name__ == '__main__':
-    model = resnet(3, [3, 4, 6, 3]).to('cuda:0')
+    model = resnet(1, [2, 2, 2, 2]).to('cuda:0')
     print(model)
-    print(summary(model, (3, 120, 120)))
+    print(summary(model, (1, 120, 120)))

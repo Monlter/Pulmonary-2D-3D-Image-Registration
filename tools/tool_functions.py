@@ -90,6 +90,11 @@ def  get_logger(filename, verbosity=1, name=None):
     logger.addHandler(fh)
     return logger
 
+def adjust_multichannels(img):
+    if len(img.shape) ==2:
+        return img[...,np.newaxis]
+    else:
+        return img
 
 def recode_progressNum(num):
     print("-"*100)

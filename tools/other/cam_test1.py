@@ -56,32 +56,32 @@ def cam_model(modelMethodName=args_my.common_model_name,dataMethodName=args_my.c
          "eigencam": EigenCAM,
          "eigengradcam": EigenGradCAM}
 
-    root_path = get_poject_path("PCA")
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     num_cp = get_fileNum(get_filename(__file__))
     workFileName = methodsName_combine(num_cp, modelMethodName, dataMethodName, lossFunctionMethodName)
-    load_model_file = os.path.join(get_savedir(num_cp, root_path, "Test1", args_my.gen_pca_method, workFileName),
+    load_model_file = os.path.join(root_path,get_savedir(num_cp, root_path, "Test1", args_my.gen_pca_method, workFileName),
                                    str(args_my.EPOCH) + ".pth")
-    model = resnet(1)
+    model = resnet(1,[2,2,2,2]).to("cuda:0")
     model.load_state_dict(torch.load(load_model_file), strict=False)
-    target_layer = model.layer4[2]
+    target_layer = model.layer4[-1]
+
 
     cam = methods[args.method](model=model, target_layer=target_layer, use_cuda=args.use_cuda)
 
-    img_moving = np.fromfile(os.path.join(root_path, "Dataset/VAL/projection/projection_1_phase"), dtype='float32').reshape((100, 240, 300))
+    img_moving = np.fromfile(os.path.join(root_path, "Dataset/Origin/VAL/projection/projection_1_phase"), dtype='float32').reshape((100, 240, 300))
     img_test_load = img_deal_cat_variable(img_moving,normal_method="max_min",data_method=dataMethodName, resize=(120, 120)).squeeze()
     img_test = img_test_load / img_test_load.max()
     img_test = img_test[..., np.newaxis]
 
     input_tensor = preprocess_image(img_test, mean=[0.485], std=[0.229])
-    print(input_tensor.shape)
-
+    input_tensor = torch.Tensor(img_test[np.newaxis,...]).permute((0,3,1,2)).to("cuda:0")
+    print(input_tensor.size())
     # If None, returns the map for the highest scoring category.
     # Otherwise, targets the requested category.
     target_category = None
     # AblationCAM and ScoreCAM have batched implementations.
     # You can override the internal batch size for faster computation.
-    cam.batch_size = 32
-
+    cam.batch_size = 1
     grayscale_cam = cam(input_tensor=input_tensor,
                         target_category=target_category,
                         aug_smooth=args.aug_smooth,

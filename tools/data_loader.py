@@ -18,6 +18,11 @@ import cv2
 
 
 def resize_img(img, resize):
+    """
+    :param img: img.shape(C,H,W) or (H,W)
+    :param resize: (resize_h,reszie_w)
+    :return: resizeImg.shape(C,H,W) or (H,W)
+    """
     if len(img.shape) == 3:
         # 默认认为shape为CHW
         img_trans = img.transpose((1, 2, 0))
@@ -188,7 +193,14 @@ def img_deal_cat(img, method, resize=None):
 #         input_img = input_img[np.newaxis, ...]
 #     return input_img
 
-def img_deal_cat_variable(imgs:np.ndarray, normal_method, data_method, resize=None)->np.ndarray:
+def img_deal_cat_variable(imgs:np.ndarray, normal_method, data_method:list, resize=None)->np.ndarray:
+    """
+    :param imgs: shape(number,H,W)
+    :param normal_method: "max-min" or "mean-std"
+    :param data_method: ["origin","sub","multiAngle","edge"]
+    :param resize: 将要调整的图像大小（resize_H,resize_W）
+    :return:input_img.shape(C,H,W)
+    """
     img_orth = imgs[25]  # 25是正投影
     # img_shape = 1 * W * H
     img_shape = list(img_orth[np.newaxis,...].shape)

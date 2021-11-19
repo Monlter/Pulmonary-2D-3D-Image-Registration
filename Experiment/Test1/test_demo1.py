@@ -1,19 +1,75 @@
 import numpy as np
 import os
-
+import cv2
 from tools.config import get_args
 from tools.tool_functions import get_poject_path, load_odd_file
 import torch
 from tools.tool_functions import *
-from tools.data_loader import Dataset, img_deal_cat_variable, return_normal_para
+from tools.data_loader import Dataset, img_deal_cat_variable, return_normal_para,data_normal_0_255
 import logging
+# 加载自己模型
+from pytorch_grad_cam import GradCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, EigenGradCAM
+from pytorch_grad_cam import GuidedBackpropReLUModel
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image, preprocess_image
 # 加载自己模型
 from Model import *
 np.set_printoptions(suppress=True)
 
 args = get_args()
 
+def cam_model(model_obj,model_name,img,save_dir,img_name):
+    methods = \
+        {"gradcam": GradCAM,
+         "scorecam": ScoreCAM,
+         "gradcam++": GradCAMPlusPlus,
+         "ablationcam": AblationCAM,
+         "xgradcam": XGradCAM,
+         "eigencam": EigenCAM,
+         "eigengradcam": EigenGradCAM}
+    if  model_name == "CNN":
+        target_layer = model_obj.conv3[-1]
+    elif "Unet":
+        target_layer = model_obj.up4.conv.double_conv[-1]
+    else :
+        target_layer = model_obj.layer4[-1]
 
+    print("求导层：",target_layer)
+    cam = methods[args.cam_method](model=model_obj, target_layer=target_layer,use_cuda=args.use_cuda)
+    img_normal = img/img.max()
+    out_img = np.array(img_normal).squeeze(0).transpose((1,2,0))
+    print(out_img.shape)
+    if args.use_cuda:
+        input_tensor = preprocess_image(out_img,mean=[0.485], std=[0.229]).to("cuda:0")
+    else:
+        input_tensor = preprocess_image(out_img,mean=[0.485], std=[0.229])
+
+    # If None, returns the map for the highest scoring category.
+    # Otherwise, targets the requested category.
+    target_category = None
+    cam.batch_size = 1
+
+    grayscale_cam = cam(input_tensor=input_tensor,
+                        target_category=target_category,
+                        aug_smooth=args.aug_smooth,
+                        eigen_smooth=args.eigen_smooth)
+
+    # Here grayscale_cam has only one image in the batch
+    grayscale_cam = grayscale_cam[0]  # 获取cam的输出图
+    cam_image = show_cam_on_image(out_img, grayscale_cam)
+
+    gb_model = GuidedBackpropReLUModel(model=model_obj, use_cuda=args.use_cuda)
+    gb = gb_model(input_tensor, target_category=target_category)
+
+    cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
+    cam_gb = deprocess_image(cam_mask * gb)
+    gb = deprocess_image(gb)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    cv2.imwrite(os.path.join(save_dir, f"{img_name}_(img).jpg"), data_normal_0_255(out_img))
+    cv2.imwrite(os.path.join(save_dir,f'{img_name}_(cam)_{args.cam_method}.jpg'), cam_image)
+    # cv2.imwrite(os.path.join(save_dir,f'{img_name}_(gb)_{args.cam_method}.jpg'), gb)
+    # cv2.imwrite(os.path.join(save_dir,f'{img_name}_(cam_gb)_{args.cam_method}.jpg'),cam_gb )
 
 
 def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name,
@@ -86,11 +142,10 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
 
     # 开始运行
     for val_name in val_files:
-        with torch.no_grad():
+        # with torch.no_grad():
             img = load_odd_file(os.path.join(val_img_folder, val_name)).reshape((100, 240, 300))
-            input_img = torch.tensor(
-                img_deal_cat_variable(img, normal_method="max_min", data_method=dataMethodName, resize=(120, 120))[
-                    np.newaxis, ...])
+            input_img = torch.tensor(img_deal_cat_variable(img, normal_method="max_min", data_method=dataMethodName, resize=(120, 120))[np.newaxis, ...])
+            cam_model(model,modelMethodName,input_img,os.path.join(root_path,experiment_dir,"anayle/cam",str(modelMethodName)),val_name)
             img_number = val_name.split("_")[1]
             pca_name = "PCA_" + img_number
             pca = load_odd_file(os.path.join(val_target_folder, pca_name))
@@ -108,7 +163,7 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
             sub_ratio = (abs(sub_value) / abs(pca)) * 100
             logger.info(
                 val_name + "\tprediction:" + str(np.around(prediction,2)) + "\torgin:" + str(np.around(pca,2))+ "\tsub_value:" + str(np.around(sub_value,2)) + "\tsub_ration(%):" + str(np.around(sub_ratio,2)))
-            print("-" * 100)
+            print("-"*100)
             loss_mse.append(sub_value)
             loss_mse_ratio.append(sub_ratio)
     logger.info("PCA_3_sub_value_mean:" + str(np.around(np.mean(np.abs(loss_mse), axis=0),2)) + "\tPCA_3_sub_value_mean_ratio(%)" + str(np.around(np.mean(loss_mse_ratio, axis=0),2)))
@@ -121,9 +176,41 @@ if __name__ == '__main__':
     # exam_test(modelMethodName="CNN")
     # recode_progressNum(2)
     # exam_test(modelMethodName="Unet")
-    # recode_progressNum(3)
-    # exam_test(modelMethodName="Resnet")
-    # recode_progressNum(4)
-    # exam_test(modelMethodName="Resnet_dilation")
-    recode_progressNum(5)
+    recode_progressNum(3)
+    exam_test(modelMethodName="Resnet")
+    recode_progressNum(4)
     exam_test(modelMethodName="Resnet_outCBAM")
+    recode_progressNum(5)
+    exam_test(modelMethodName="Resnet_dilation")
+    recode_progressNum(6)
+    exam_test(modelMethodName="Resnet_outSPA_dilation")
+    recode_progressNum(7)
+    exam_test(modelMethodName="Resnet_outCBAM_dilation")
+    recode_progressNum(8)
+    exam_test(modelMethodName="Resnet_outSPA")
+    recode_progressNum(9)
+    exam_test(modelMethodName="Resnet_inCBAM")
+    recode_progressNum(10)
+    exam_test(modelMethodName="Resnet_inSPA")
+    recode_progressNum(11)
+    exam_test(modelMethodName="Resnet_allSPA")
+    recode_progressNum(12)
+    exam_test(modelMethodName="Resnet_allCBAM")
+    recode_progressNum(13)
+    exam_test(modelMethodName="Resnet_inSPA_outCBAM")
+    recode_progressNum(14)
+    exam_test(modelMethodName="Resnet_inCBAM_outSPA")
+    recode_progressNum(15)
+    exam_test(modelMethodName="Resnet_outSE")
+    recode_progressNum(16)
+    exam_test(modelMethodName="Resnet_inSE")
+    recode_progressNum(17)
+    exam_test(modelMethodName="Resnet_allSE")
+    recode_progressNum(18)
+    exam_test(modelMethodName="Resnet_inSPA_outSE")
+    recode_progressNum(19)
+    exam_test(modelMethodName="Resnet_inSE_outSPA")
+    recode_progressNum(20)
+    exam_test(modelMethodName="Resnet_inCBAM_outSE")
+    recode_progressNum(21)
+    exam_test(modelMethodName="Resnet_inSE_outCBAM")

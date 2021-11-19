@@ -8,7 +8,7 @@ def get_args():
     parser.add_argument('--target_folder', '-t', type=str, default='Dataset/Test_9dvf/PCAs', dest='target_folder')
     parser.add_argument('--PCA_all_folder', '-p', type=str, default=r'Dataset/Test_9dvf/DVF_trans_PCAs',
                         dest='PCA_all_folder')
-    parser.add_argument('--val_img_folder', type=str, default='Dataset/Test_9dvf/VAL/projection/',
+    parser.add_argument('--val_img_folder', type=str, default='Dataset/Test_9dvf/VAL/projection',
                         dest='val_img_folder')
     parser.add_argument('--val_target_folder', type=str, default='Dataset/Test_9dvf/PCAs/', dest='val_target_folder')
     parser.add_argument("--output_folder", type=str, default='Dataset/Test_9dvf/Output/', dest="output_folder")
@@ -32,7 +32,7 @@ def get_args():
                                  'ablationcam', 'eigencam', 'eigengradcam'],
                         help='Can be gradcam/gradcam++/scorecam/xgradcam'
                              '/ablationcam/eigencam/eigengradcam')
-    parser.add_argument('--use-cuda', action='store_true', default=False,
+    parser.add_argument('--use-cuda', action='store_true', default=True,
                         help='Use NVIDIA GPU acceleration')
     parser.add_argument('--aug_smooth', action='store_true',
                         help='Apply test time augmentation to smooth the CAM')
