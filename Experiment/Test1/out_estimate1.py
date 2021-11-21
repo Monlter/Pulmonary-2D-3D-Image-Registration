@@ -7,9 +7,10 @@ from tools.config import get_args
 from tools.estimate_methods import *
 import csv
 
-def estimate_calc(real_CTs_numpy,predict_CTs_numpy,estimate_methods_list):
+def estimate_calc(real_CT_numpy,predict_CT_numpy,estimate_methods_list):
     estimate_method_function = {
         "NMI":NMI,
+        "MI":MI,
         "SSD":SSD,
         "SAD":SAD,
         "MSE":MSE,
@@ -18,7 +19,7 @@ def estimate_calc(real_CTs_numpy,predict_CTs_numpy,estimate_methods_list):
     }
     estimate_data = []
     for estimate_method in estimate_methods_list:
-        estimate_data.append(estimate_method_function[estimate_method](real_CTs_numpy, predict_CTs_numpy))
+        estimate_data.append(estimate_method_function[estimate_method](real_CT_numpy, predict_CT_numpy))
     return estimate_data
 
 def composite_all_excel(all_excel_path):
@@ -27,7 +28,7 @@ def composite_all_excel(all_excel_path):
     for excel_name in all_excel_list:
         excel_path = os.path.join(all_excel_path,excel_name)
         dataframe = pd.read_csv(excel_path,sep=',',index_col=0,header=0)
-        dataframe_list.append(dataframe)
+        dataframe_list.append(dataframe.values)
     composite_dataframe_mean = pd.DataFrame(np.mean(dataframe_list,axis=0),index=dataframe.index,columns=dataframe.columns)
     composite_dataframe_std = pd.DataFrame(np.std(dataframe_list,axis=0),index=dataframe.index,columns=dataframe.columns)
     composite_dataframe_mean.to_csv(os.path.join(all_excel_path,"composite_out_CTs_mean.csv"),header=True,index=True,sep=',')
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     # 评估方法
-    estimate_methods_list = ["NMI","SSD","SAD","MSE","NCC","SSIM"]
+    estimate_methods_list = ["SSD","SAD","MSE","NCC","SSIM"]
     # 获取CT_list
     real_CT_path = os.path.join(root_path, args.real_ct)
     real_CT_list = os.listdir(real_CT_path)
