@@ -265,7 +265,7 @@ class Bottleneck(nn.Module):
         out = self.bn3(out)
 
         if self.is_inlineAttention:
-            self.inlineAttention(out) * out
+            out=self.inlineAttention(out) * out
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -362,6 +362,11 @@ def resnet(in_channel, layers=[3, 4, 6, 3],  dilation=1, is_outAttention=None, i
 
 
 if __name__ == '__main__':
-    model = resnet(1, [2, 2, 2, 2]).to('cuda:0')
+    model = resnet(1, [2, 2, 2, 2],is_inlineAttention="SE", is_outAttention="CBAM").to('cuda:0')
     print(model)
     print(summary(model, (1, 120, 120)))
+    
+    input_x = torch.randn(12, 1, 120, 120).to("cuda:0")
+    model_data = "./demo1.pth"
+    torch.onnx.export(model, input_x, model_data)
+    netron.start(model_data)
