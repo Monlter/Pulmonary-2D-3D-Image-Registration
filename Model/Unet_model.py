@@ -106,3 +106,9 @@ class UNet_net(nn.Module):
         x = x.view(x.size(0), -1)
         logits = self.outc(x)
         return logits
+
+
+if __name__ == '__main__':
+    model = UNet_net(1,3)
+    print(model.up4.conv.double_conv[-1])
+

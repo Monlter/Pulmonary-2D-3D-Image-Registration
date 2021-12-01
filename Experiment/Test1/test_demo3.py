@@ -27,11 +27,37 @@ def exam_test(modelMethodName=args.common_model_name, dataMethodName=args.common
     model_methods = {
         "CNN": CNN_model.CNN_net(in_channels),
         "Unet": Unet_model.UNet_net(in_channels, 3),
-        "Resnet": Resnet_attention.resnet(in_channels),
-        "Resnet_Triplet": Resnet_Triplet_atttention.resnet(in_channels, is_Triplet=True),
-        "Resnet_CBAM": Resnet_attention.resnet(in_channels, is_CBAM=True),
-        "Resnet_dilation": Resnet_attention.resnet(in_channels, dilation=3),
-        "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels, is_CBAM=True, dilation=3)
+        "Resnet": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2]),
+        "Resnet_outTriplet": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="Triplet"),
+        "Resnet_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM"),
+        "Resnet_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], dilation=3),
+        "Resnet_outSPA_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA",
+                                                          dilation=3),
+        "Resnet_outCBAM_dilation": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="CBAM",
+                                                           dilation=3),
+        "Resnet_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SPA"),
+        "Resnet_inCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM"),
+        "Resnet_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_outAttention="SE"),
+        "Resnet_inSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA"),
+        "Resnet_inSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE"),
+        "Resnet_allSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                 is_outAttention="SPA"),
+        "Resnet_allCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                  is_outAttention="CBAM"),
+        "Resnet_allSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                is_outAttention="SE"),
+        "Resnet_inSPA_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                        is_outAttention="CBAM"),
+        "Resnet_inCBAM_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                        is_outAttention="SPA"),
+        "Resnet_inCBAM_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
+                                                       is_outAttention="SE"),
+        "Resnet_inSPA_outSE": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
+                                                      is_outAttention="SE"),
+        "Resnet_inSE_outSPA": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                      is_outAttention="SPA"),
+        "Resnet_inSE_outCBAM": Resnet_attention.resnet(in_channels, layers=[2, 2, 2, 2], is_inlineAttention="SE",
+                                                       is_outAttention="CBAM"),
     }
     root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
     file_name = get_filename(__file__)
@@ -145,8 +171,51 @@ def cam_model(modelMethodName=args.common_model_name, dataMethodName=args.common
 
 
 if __name__ == '__main__':
-    # exam_test("Unet")
-    cam_model(dataMethodName="origin",modelMethodName="Unet")
-    cam_model(dataMethodName="sub",modelMethodName="Unet")
-    cam_model(dataMethodName="edge",modelMethodName="Unet")
-    cam_model(dataMethodName="multiAngle",modelMethodName="Unet")
+    # # exam_test("Unet")
+    # cam_model(dataMethodName="origin",modelMethodName="Unet")
+    # cam_model(dataMethodName="sub",modelMethodName="Unet")
+    # cam_model(dataMethodName="edge",modelMethodName="Unet")
+    # cam_model(dataMethodName="multiAngle",modelMethodName="Unet")
+    recode_progressNum(1)
+    exam_test(modelMethodName="CNN")
+    recode_progressNum(2)
+    exam_test(modelMethodName="Unet")
+    recode_progressNum(3)
+    exam_test(modelMethodName="Resnet")
+    recode_progressNum(4)
+    exam_test(modelMethodName="Resnet_outCBAM")
+    recode_progressNum(5)
+    exam_test(modelMethodName="Resnet_dilation")
+    recode_progressNum(6)
+    exam_test(modelMethodName="Resnet_outSPA_dilation")
+    recode_progressNum(7)
+    exam_test(modelMethodName="Resnet_outCBAM_dilation")
+    recode_progressNum(8)
+    exam_test(modelMethodName="Resnet_outSPA")
+    recode_progressNum(9)
+    exam_test(modelMethodName="Resnet_inCBAM")
+    recode_progressNum(10)
+    exam_test(modelMethodName="Resnet_inSPA")
+    recode_progressNum(11)
+    exam_test(modelMethodName="Resnet_allSPA")
+    recode_progressNum(12)
+    exam_test(modelMethodName="Resnet_allCBAM")
+    recode_progressNum(13)
+    exam_test(modelMethodName="Resnet_inSPA_outCBAM")
+    recode_progressNum(14)
+    exam_test(modelMethodName="Resnet_inCBAM_outSPA")
+    recode_progressNum(15)
+    exam_test(modelMethodName="Resnet_outSE")
+    recode_progressNum(16)
+    exam_test(modelMethodName="Resnet_inSE")
+    recode_progressNum(17)
+    exam_test(modelMethodName="Resnet_allSE")
+    recode_progressNum(18)
+    exam_test(modelMethodName="Resnet_inSPA_outSE")
+    recode_progressNum(19)
+    exam_test(modelMethodName="Resnet_inSE_outSPA")
+    recode_progressNum(20)
+    exam_test(modelMethodName="Resnet_inCBAM_outSE")
+    recode_progressNum(21)
+    exam_test(modelMethodName="Resnet_inSE_outCBAM")
+

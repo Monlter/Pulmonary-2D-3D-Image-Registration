@@ -27,6 +27,8 @@ def get_args():
     parser.add_argument("--predict_dvf", type=str, default="Dataset/Test_9dvf/Output/dvf",dest="predict_dvf")
     parser.add_argument("--predict_ct", type=str, default="Dataset/Test_9dvf/Output/CT", dest="predict_ct")
     parser.add_argument("--real_ct", type=str, default="Dataset/Origin/CT", dest="real_ct")
+    parser.add_argument("--pca_frame", type=str, default="Experiment/Test1/PCA_origin/model_cp/anayle/loss_out_csv/out_val.csv", dest="pca_frame")
+
     parser.add_argument('--cam_method', type=str, default='gradcam',
                         choices=['gradcam', 'gradcam++', 'scorecam', 'xgradcam',
                                  'ablationcam', 'eigencam', 'eigengradcam'],

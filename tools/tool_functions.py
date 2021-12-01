@@ -5,7 +5,8 @@ import torch
 import random
 import re
 import time
-comparsion_mode = ["model_cp", "data_cp", "heatmap_cp", "lossFunction_cp","noise_cp"]
+
+comparsion_mode = ["model_cp", "data_cp", "heatmap_cp", "lossFunction_cp", "noise_cp"]
 
 
 def get_poject_path(PROJECT_NAME):
@@ -14,7 +15,15 @@ def get_poject_path(PROJECT_NAME):
     return root_path
 
 
-"""¼ÓÔØfile"""
+"""删除list空项"""
+
+
+def trim(list):
+    list_out = []
+    for i in list:
+        if i != '':
+            list_out.append(i)
+    return list_out
 
 
 def load_all_file(file_folder):
@@ -34,7 +43,7 @@ def load_odd_file(filename):
 def file_save(data, name, save_folder):
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-    data.tofile(os.path.join(save_folder, name),)
+    data.tofile(os.path.join(save_folder, name), )
 
 
 """¶Ôpca½øÐÐorigin_fileµÄ»¹Ô­"""
@@ -75,7 +84,7 @@ def get_dataMethodName(data_methods):
     return returnstr
 
 
-def  get_logger(filename, verbosity=1, name=None):
+def get_logger(filename, verbosity=1, name=None):
     level_dict = {0: logging.DEBUG, 1: logging.INFO, 2: logging.WARNING}
     formatter = logging.Formatter(
         "[%(asctime)s] %(message)s"
@@ -90,15 +99,17 @@ def  get_logger(filename, verbosity=1, name=None):
     logger.addHandler(fh)
     return logger
 
+
 def adjust_multichannels(img):
-    if len(img.shape) ==2:
-        return img[...,np.newaxis]
+    if len(img.shape) == 2:
+        return img[..., np.newaxis]
     else:
         return img
 
+
 def recode_progressNum(num):
-    print("-"*100)
-    print("progress_"+str(num), "start:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    print("-" * 100)
+    print("progress_" + str(num), "start:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
 def setup_seed(seed):
@@ -120,7 +131,7 @@ def methodsName_combine(num_cp, modelMethod, dataMethod, lossFunctionMethod):
     elif num_cp == 4:
         returnstr = lossFunctionMethod + "(" + modelMethod + "_" + dataMethod + ")"
     elif num_cp == 5:
-        returnstr = "("+modelMethod+"_"+dataMethod+"_"+lossFunctionMethod+")"
+        returnstr = "(" + modelMethod + "_" + dataMethod + "_" + lossFunctionMethod + ")"
     print("modelMethod:", modelMethod, "\tdataMethod:", dataMethod, "\tlossfunction:", lossFunctionMethod)
     return returnstr
 
@@ -144,18 +155,22 @@ def get_filename(file):
     filename = os.path.basename(file)
     return filename
 
+
 def get_testName(file):
     project_path = os.path.abspath(os.path.dirname(file))
     testName = project_path[project_path.find("Test"):project_path.find("Test") + 5]
     return testName
 
+
 def get_fileNum(filename):
     num = re.findall(re.compile(r'\d+'), filename)
     return int(num[0])
 
+
 def get_fileType(filename):
     returnstr = filename[:filename.find("_")]
     return returnstr
+
 
 def get_dataMethod_num(dataMethodName):
     num = 0
@@ -169,6 +184,7 @@ def get_dataMethod_num(dataMethodName):
         num += 1
     return num
 
+
 def get_logfilename(num_cp, modelMethod, dataMethod, lossFunctionMethod):
     returnstr = ''
     if num_cp == 1:
@@ -180,9 +196,6 @@ def get_logfilename(num_cp, modelMethod, dataMethod, lossFunctionMethod):
     elif num_cp == 4:
         returnstr = lossFunctionMethod
     return returnstr
-
-
-
 
 
 if __name__ == '__main__':
