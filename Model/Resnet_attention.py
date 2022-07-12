@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torchsummary import summary
 import math
 import math
-import netron
+# import netron
 import torch.onnx
 
 RANDOM_SEED = 1
@@ -70,7 +70,7 @@ class CBAM_attention(nn.Module):
         self.sa = SpatialAttention()
 
     def forward(self, x):
-        x_ca = self.ca(x)
+        x_ca = self.ca(x) * x
         x_sa = self.sa(x_ca)
         x_out = x_sa
         return x_out
@@ -89,7 +89,7 @@ class SPPLayer(torch.nn.Module):
         self.pool_type = pool_type
 
     def forward(self, x):
-        num, c, h, w = x.size()  # num:Ñù±¾ÊýÁ¿ c:Í¨µÀÊý h:¸ß w:¿í
+        num, c, h, w = x.size()
         for i in range(self.num_levels):
             level = i + 1
             kernel_size = (math.ceil(h / level), math.ceil(w / level))
@@ -97,13 +97,11 @@ class SPPLayer(torch.nn.Module):
             pooling = (
                 math.floor((kernel_size[0] * level - h + 1) / 2), math.floor((kernel_size[1] * level - w + 1) / 2))
 
-            # Ñ¡Ôñ³Ø»¯·½Ê½
             if self.pool_type == 'max_pool':
                 tensor = F.max_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
             if self.pool_type == 'avg_pool':
                 tensor = F.avg_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
 
-            # Õ¹¿ª¡¢Æ´½Ó
             if (i == 0):
                 SPP = tensor.view(num, -1)
             else:
@@ -372,4 +370,4 @@ if __name__ == '__main__':
     input_x = torch.randn(12, 1, 120, 120).to("cuda:0")
     model_data = "./demo1.pth"
     torch.onnx.export(model, input_x, model_data)
-    netron.start(model_data)
+    # netron.start(model_data)

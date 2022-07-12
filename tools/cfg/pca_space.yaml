@@ -1,0 +1,85 @@
+# 基础设置
+DATASET: 'Digital_phantom'
+MODEL_TYPE: space
+PREDICTION_MODE: pca
+
+EXAM_PROCESS:
+  - NAME: test_1
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Unet
+    LOSSFUNCTION: MSE
+
+  - NAME: test_2
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: CNN
+    LOSSFUNCTION: MSE
+
+  - NAME: test_3
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet
+    LOSSFUNCTION: MSE
+
+  - NAME: test_4
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_allSPA
+    LOSSFUNCTION: MSE
+
+  - NAME: test_5
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_allCBAM
+    LOSSFUNCTION: MSE
+
+  - NAME: test_6
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_allSE
+    LOSSFUNCTION: MSE
+
+  - NAME: test_7
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inSPA_outCBAM
+    LOSSFUNCTION: MSE
+
+  - NAME: test_8
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inCBAM_outSPA
+    LOSSFUNCTION: MSE
+
+  - NAME: test_9
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inCBAM_outSE
+    LOSSFUNCTION: MSE
+
+  - NAME: test_10
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inSPA_outSE
+    LOSSFUNCTION: MSE
+
+  - NAME: test_11
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inSE_outSPA
+    LOSSFUNCTION: MSE
+
+  - NAME: test_12
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: Resnet_inSE_outCBAM
+    LOSSFUNCTION: MSE
+
+
+
+
+
+
+
+
