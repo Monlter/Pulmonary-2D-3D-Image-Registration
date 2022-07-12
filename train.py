@@ -3,11 +3,8 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tools.data_loader import Dataset_CBCT, Dataset_PCA
 from torch.utils.data import DataLoader
 import math
-import os
-import logging
 from tools.loss_tool import PCA_loss, Log_cosh, PCA_smoothL1Loss
 from tools.config import get_args
-import numpy as np
 import yaml
 from functools import partial
 from tools.instanceExam import InstanceExam
@@ -159,8 +156,10 @@ def train(args, cfg):
             writer.add_scalars("train_progress", {"train_loss": loss_mse.item(), "val_loss": val_loss.item()})
 
             if (epoch + 1) % args.EPOCH == 0:
-                ckpt_file_name = os.path.join(exam_instance.ckpt_dir, str(epoch + 1) + ".pth")
-                torch.save(model.state_dict(), ckpt_file_name)
+                cur_ckpt_dir = os.path.join(exam_instance.ckpt_dir,exam_instance.work_fileName)
+                os.makedirs(cur_ckpt_dir, exist_ok=True)
+                cur_ckpt_file_name = os.path.join(cur_ckpt_dir, str(epoch + 1) + ".pth")
+                torch.save(model.state_dict(), cur_ckpt_file_name)
 
         logger.info('finish training!')
         logging.shutdown()
