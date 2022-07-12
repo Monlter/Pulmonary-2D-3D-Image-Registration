@@ -6,14 +6,6 @@ import math
 from torch.autograd import Variable, Function
 
 
-def loss_function(y, prediction):
-    wcoeff = torch.FloatTensor([[2 / math.sqrt(6), 1 / math.sqrt(6), 1 / math.sqrt(6)]]).to("cuda:0")
-    U = torch.FloatTensor([[0.00018971, 0.00048171, 0.00063309]]).to("cuda:0")
-    # loss_mse = torch.mean(torch.sum((1 / 3) * torch.norm(U * wcoeff * (y - prediction), dim=1), dim=0))
-    loss_mse = torch.mean((1 / 3) * torch.norm(U * wcoeff * (y - prediction), dim=1), dim=0)
-    return loss_mse
-
-
 class PCA_loss(nn.Module):
     def __init__(self, wcoeff):
         super(PCA_loss, self).__init__()
@@ -94,3 +86,15 @@ class CenterLoss(nn.Module):
         loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
 
         return loss
+
+
+def CBCT_MSE(predict, ground_truth):
+    # CBCT.shape:[B,150,256,256]
+    return torch.sum(torch.norm((predict-ground_truth), dim=(2, 3)))
+
+
+def return_regularizationloss(model):
+    regularization_loss = 0
+    for param in model.parameters():
+        regularization_loss += torch.sum(torch.abs(param))
+    return regularization_loss
