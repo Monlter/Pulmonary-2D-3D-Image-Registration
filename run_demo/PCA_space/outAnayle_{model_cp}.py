@@ -3,9 +3,7 @@ import os
 
 import pandas as pd
 
-from tools.tool_functions import *
-import pandas
-from tools.config import get_args
+from tools import config,tool_functions,data_loader,pca_data_processing
 
 
 def pd_save_csv(log_list):
@@ -55,22 +53,38 @@ def pd_save_csv(log_list):
     train_frame.to_csv(os.path.join(out_dir, "out_train.csv"), sep=",", index=True, header=True)
 
     val_frame = pd.DataFrame(log_val_data)
-    val_frame_T = pd.DataFrame(val_frame.T,index=val_frame.columns,columns=val_frame.index)
+    val_frame_T = pd.DataFrame(val_frame.T, index=val_frame.columns,columns=val_frame.index)
     val_frame_T.to_csv(os.path.join(out_dir, "out_val.csv"), sep=",", index=True, header=True)
 
     return train_frame, val_frame
 
 
+args = config.get_args()
+
+def init_args(modelMethodName, inputModeName,lossFunctionMethodName):
+    args.modelMethod = modelMethodName
+    args.inputMode = inputModeName
+    args.lossFunctionMethod = lossFunctionMethodName
+
+    current_file = tool_functions.get_filename(__file__)
+    cpName = tool_functions.get_cpName(current_file)
+    args.cpName = cpName
+
+    testName = tool_functions.get_testName(__file__)
+    args.testName = testName
+
+    root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
+    args.root_path = root_path
+
+    workFileName = tool_functions.methodsName_combine(args)
+    args.workFileName = workFileName
 
 if __name__ == '__main__':
-    args = get_args()
-    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
-    num_cp = get_fileNum(get_filename(__file__))
-    testName = get_testName(__file__)  # TEST1
-    experiment_dir = get_experimentDir(num_cp, root_path, testName,
-                                       args.gen_pca_method)  # E:\code\pycharm\PCA\Experiment\Test1/PCA_origin/model_cp
-    log_path = os.path.join(experiment_dir, "log")
-    out_dir = os.path.join(experiment_dir, "anayle/loss_out_csv")
+
+    root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
+
+    log_path = os.path.join(tool_functions.get_out_result_dir(args), "log")
+    out_dir = os.path.join( tool_functions.get_out_result_dir(args), "anayle/loss_out_csv")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

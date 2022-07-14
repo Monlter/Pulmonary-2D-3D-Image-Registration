@@ -1,23 +1,42 @@
 import numpy as np
 import os
 import pandas as pd
-from tools.tool_functions import *
+from tools import tool_functions, config, estimate_methods
 import pandas
-from tools.config import get_args
-from tools.estimate_methods import *
 import csv
+
+args = config.get_args()
+
+
+def init_args(modelMethodName, inputModeName, lossFunctionMethodName):
+    args.modelMethod = modelMethodName
+    args.inputMode = inputModeName
+    args.lossFunctionMethod = lossFunctionMethodName
+
+    current_file = tool_functions.get_filename(__file__)
+    cpName = tool_functions.get_cpName(current_file)
+    args.cpName = cpName
+
+    testName = tool_functions.get_testName(__file__)
+    args.testName = testName
+
+    root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
+    args.root_path = root_path
+
+    workFileName = tool_functions.methodsName_combine(args)
+    args.workFileName = workFileName
 
 
 def estimate_calc(model_name, real_PCA_numpy, predict_PCA_numpy, real_CT_numpy, predict_CT_numpy,
                   estimate_methods_list):
     estimate_method_function = {
-        "MAE": MAE,
-        "MAE_percentage": MAE_percentage,
-        "R2": R2,
-        "MAD": MAE,
-        "MAD_percentage": MAE_percentage,
-        "NCC": NCC,
-        "SSIM": SSIM
+        "MAE": estimate_methods.MAE,
+        "MAE_percentage": estimate_methods.MAE_percentage,
+        "R2": estimate_methods.R2,
+        "MAD": estimate_methods.MAE,
+        "MAD_percentage": estimate_methods.MAE_percentage,
+        "NCC": estimate_methods.NCC,
+        "SSIM": estimate_methods.SSIM
     }
     estimate_data = []
     for estimate_method in estimate_methods_list:
@@ -48,16 +67,11 @@ def composite_all_excel(all_excel_path):
 
 
 if __name__ == '__main__':
-    args = get_args()
     estimate_data = {}
     # 根目录
-    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
+    root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
     # out_path
-    num_cp = get_fileNum(get_filename(__file__))
-    testName = get_testName(__file__)  # TEST1'
-    experiment_dir = get_experimentDir(num_cp, root_path, testName,
-                                       args.gen_pca_method)  # E:\code\pycharm\PCA\Experiment\Test1/PCA_origin/model_cp
-    out_dir = os.path.join(experiment_dir, "anayle")
+    out_dir = os.path.join(tool_functions.get_out_result_dir(args), "anayle")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     # 评估方法
@@ -72,7 +86,7 @@ if __name__ == '__main__':
         real_PCA_numpy = np.array(trim(pca_frame["origin"][i].split("[")[1].split("]")[0].split(" ")))
 
         # real_CT
-        real_CT_numpy = load_odd_file(os.path.join(real_CT_path, "ct_" + str(i + 1) + ".bin")).reshape(150, 256,
+        real_CT_numpy = tool_functions.load_odd_file(os.path.join(real_CT_path, "ct_" + str(i + 1) + ".bin")).reshape(150, 256,
                                                                                                        256).transpose(1,
                                                                                                                       2,
                                                                                                                       0)
@@ -84,7 +98,7 @@ if __name__ == '__main__':
             # predict_ct
             predict_CT_path = os.path.join(all_predict_CT_path, model_name, "predict_ct_" + str(i + 1))
             print(model_name, "predict_" + str(i))
-            predict_CT_numpy = load_odd_file(predict_CT_path).reshape(150, 256, 256).transpose(1, 2, 0)
+            predict_CT_numpy = tool_functions.load_odd_file(predict_CT_path).reshape(150, 256, 256).transpose(1, 2, 0)
             # predict_pca
             predict_PCA_numpy = np.array(
                 trim(pca_frame[model_name.split("(")[0]][i].split("[")[1].split("]")[0].split(" ")))

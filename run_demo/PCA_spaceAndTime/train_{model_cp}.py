@@ -1,6 +1,6 @@
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from tools.data_loader import Dataset_variable
+from tools.data_loader import Dataset_PCA
 from torch.utils.data import DataLoader
 import math
 import os
@@ -16,30 +16,48 @@ from Model import *
 
 args = get_args()
 
+
+def init_args(modelMethodName, inputModeName,lossFunctionMethodName):
+    args.modelMethod = modelMethodName
+    args.inputMode = inputModeName
+    args.lossFunctionMethod = lossFunctionMethodName
+
+    current_file = get_filename(__file__)
+    cpName = get_cpName(current_file)
+    args.cpName = cpName
+
+    testName = get_testName(__file__)
+    args.testName = testName
+    print(testName)
+
+    root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
+    args.root_path = root_path
+
+    workFileName = methodsName_combine(args)
+    args.workFileName = workFileName
+
+
+
+
+
 def val(Dataset_loader, net, loss_function, device):
     val_loss = 0
     with torch.no_grad():
-        for i, (img, target) in enumerate(Dataset_loader):
-            img = img.to(device)
+        for i, (imgs, target) in enumerate(Dataset_loader):
+            imgs = imgs.to(device)
             target = target.to(device)
-            prediction = net(img)
+            prediction = net(imgs)
             loss = loss_function(prediction, target)
             val_loss += loss
     return (val_loss / (i + 1))
 
 
-def train(modelMethodName=args.common_model_name, dataMethodName=args.common_data_name, lossFuntionMethodName=args.common_lossfunction_name):
+def train(modelMethodName=args.modelMethod, inputModeName=args.inputMode,lossFunctionMethodName=args.lossFunctionMethod):
     # 初始化
-    in_channels = get_dataMethod_num(dataMethodName)
+    in_channels = get_channelNum(inputModeName)
     # 模型方式
     model_methods = {
-        "CNN": CNN_model.CNN_net(in_channels),
-        "Unet": Unet_model.UNet_net(in_channels, 3),
-        "Resnet": Resnet_attention.resnet(in_channels),
-        "Resnet_Triplet":Resnet_Triplet_atttention.resnet(in_channels,is_Triplet=True),
-        "Resnet_CBAM":Resnet_attention.resnet(in_channels,is_CBAM=True),
-        "Resnet_dilation":Resnet_attention.resnet(in_channels,dilation=3),
-        "Resnet_CBAM_dilation": Resnet_attention.resnet(in_channels,is_CBAM=True, dilation=3)
+        "ConvLSTM": convLSTM_model.ConvLSTM_Liner(in_channels),
     }
     # 损失函数方式
     lossfunction_methods = {
@@ -47,43 +65,41 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
         "Smooth_MSE": PCA_smoothL1Loss,
         "log_cosh": Log_cosh
     }
-    # 获取当前训练的实验号
-    file_name = get_filename(__file__)
-    num_cp = get_fileNum(file_name)
-    testName = get_testName(__file__)
 
+    init_args(modelMethodName, inputModeName,lossFunctionMethodName)
     setup_seed(12)
 
-    if not modelMethodName:
-        modelMethodName = args.common_model_name
+    # if not modelMethodName:
+    #     modelMethodName = args.common_model_name
     root_path = get_poject_path("Pulmonary-2D-3D-Image-Registration")
-    workFileName = methodsName_combine(num_cp, modelMethodName, dataMethodName, lossFuntionMethodName)
-    # 实验路径（"PCA/Experiment/Test1/PCA_origin/"）：——> 用于生成log和run文件夹
-    experiment_dir = get_experimentDir(num_cp, root_path, testName, args.gen_pca_method)
+
+
+    # 结果路径（"PCA/Out_result/Test_space/"）：——> 用于生成log和run文件夹
+    out_result_dir = get_out_result_dir(args)
     # log文件夹
-    log_dir = make_dir(os.path.join(experiment_dir, 'log/'))
+    log_dir = make_dir(os.path.join(out_result_dir, 'log/'))
     # run文件夹
-    tensorboard_dir = make_dir(os.path.join(experiment_dir, 'run/'))
+    tensorboard_dir = make_dir(os.path.join(out_result_dir, 'run/'))
     # 保存路径：——> 用于保存训练的权重文件
-    save_dir = get_savedir(num_cp, root_path, testName, args.gen_pca_method, workFileName)
+    save_dir = get_checkpoint_dir(args)
     # 生成log文件
-    logger = get_logger(log_dir + workFileName + "_train.log",1,workFileName)
+    logger = get_logger(log_dir + args.workFileName + "_train.log", 1, args.workFileName)
     # 生成run文件
-    writer = SummaryWriter(tensorboard_dir + workFileName)
+    writer = SummaryWriter(tensorboard_dir + args.workFileName)
 
     # 超参数设定
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = model_methods[modelMethodName].to(device)
     batch_size = args.batch_size
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = ReduceLROnPlateau(opt, mode='min', verbose=1, patience=3)
+    scheduler = ReduceLROnPlateau(opt, mode='min', verbose=True, patience=3)
     wcoeff = torch.FloatTensor([2 / math.sqrt(6), 1 / math.sqrt(6), 1 / math.sqrt(6)]).to(device)
-    loss_fn = lossfunction_methods[lossFuntionMethodName](wcoeff)
+    loss_fn = lossfunction_methods[lossFunctionMethodName](wcoeff)
     # 数据加载
-    img_folder = os.path.join(root_path, args.img_folder)
-    target_folder = os.path.join(root_path, args.target_folder)
-    PCA_all_folder = os.path.join(root_path, args.PCA_all_folder)
-    dataset = Dataset_variable(img_folder, target_folder, PCA_all_folder, dataMethodName)
+    img_folder = os.path.join(args.root_path, args.img_folder)
+    target_folder = os.path.join(args.root_path, args.target_folder)
+    PCA_all_folder = os.path.join(args.root_path, args.PCA_all_folder)
+    dataset = Dataset_PCA(img_folder, target_folder, PCA_all_folder, inputModeName, args.testName)
     num_dataset = len(dataset)
     test_size = int(len(dataset) * args.val_ratio)
     train_size = int(len(dataset) - test_size)
@@ -95,8 +111,8 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
     # 训练参数设定
     logger.info(
-        "Experiment:" + str(testName) + "\tdata_method:" + str(args.gen_pca_method) + "\tmodel:" + str(
-            modelMethodName) + '\tdataMethod:' + str(dataMethodName) + '\tloss_function:' + str(lossfunction_methods))
+        "TestName:" + str(args.testName) + "\tdata_method:" + str(args.gen_pca_method) + "\tmodel:" + str(
+            modelMethodName) + '\tdataMethod:' + str(inputModeName) + '\tloss_function:' + str(lossFunctionMethodName))
     logger.info("Epoch:" + str(args.EPOCH) + "\tdata_num:" + str(num_dataset) + "\tdata_ratio:" + str(args.val_ratio))
     logger.info("---" * 100)
     loss_epoch = []
@@ -104,10 +120,10 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
     logger.info('start training!')
     for epoch in range(args.EPOCH):
         loss_mse = 0
-        for i, (img, target) in enumerate(train_data_loader):
-            img = img.to(device)
+        for i, (imgs, target) in enumerate(train_data_loader):
+            imgs = imgs.to(device)
             target = target.to(device)
-            prediction = model(img)
+            prediction = model(imgs)
             loss_item = loss_fn(target, prediction)
             loss_mse += loss_item
             opt.zero_grad()  # 清空上一步残余更新参数值
@@ -125,8 +141,8 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
                                                                           val_loss.item()))
         writer.add_scalars("train_progress", {"train_loss": loss_mse.item(), "val_loss": val_loss.item()})
 
-        if (epoch + 1) % 50 == 0:
-            save_file_name = str(save_dir + str(epoch + 1) + ".pth")
+        if (epoch + 1) % args.EPOCH == 0:
+            save_file_name = os.path.join(save_dir, str(epoch + 1) + ".pth")
             torch.save(model.state_dict(), save_file_name)
 
     logger.info('finish training!')
@@ -135,4 +151,4 @@ def train(modelMethodName=args.common_model_name, dataMethodName=args.common_dat
 
 
 if __name__ == '__main__':
-    train("Resnet_Triplet")
+    train(modelMethodName="ConvLSTM")
