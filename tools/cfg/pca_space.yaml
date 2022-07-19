@@ -1,7 +1,13 @@
 # 基础设置
-DATASET: 'Digital_phantom'
+DATASET: 'Patient/5'
 MODEL_TYPE: space
-PREDICTION_MODE: pca
+PREDICTION_MODE: PCA
+DATA_SHAPE: {
+  'PCA': [3,],
+  'CBCT': [306,600,600],
+  'DVF': [3,306,600,600],
+  'PROJECTION': [512,384]
+}
 
 EXAM_PROCESS:
   - NAME: test_1

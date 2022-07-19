@@ -121,5 +121,26 @@ def NAE(real_copy, predict_copy):
     return nae_score
 
 
+def estimate_calc(GT_PCA_numpy, predict_PCA_numpy, GT_CT_numpy, predict_CT_numpy, estimate_methods_list):
+    estimate_method_function = {
+        "MAE": MAE,
+        "MAE_percentage": MAE_percentage,
+        "R2": R2,
+        "MAD": MAE,
+        "MAD_percentage": MAE_percentage,
+        "NCC": NCC,
+        "SSIM": SSIM
+    }
+    estimate_data = []
+    for estimate_method in estimate_methods_list:
+        # 评价 PCA
+        if estimate_method in ["MAE", "R2", "MAE_percentage"]:
+            estimate_data.append(estimate_method_function[estimate_method](GT_PCA_numpy, predict_PCA_numpy))
+        # 评价 图像
+        else:
+            estimate_data.append(estimate_method_function[estimate_method](GT_CT_numpy, predict_CT_numpy))
+    return estimate_data
+
+
 if __name__ == '__main__':
     pass

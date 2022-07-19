@@ -10,10 +10,9 @@ class ExamTemplate():
         self.dataset = cfg["DATASET"]
         self.model_type = cfg["MODEL_TYPE"]
         self.prediction_mode = cfg["PREDICTION_MODE"]
+        self.data_shape = cfg["DATA_SHAPE"]
         self.ckpt_dir = os.path.join(self.root_path,"checkpoint",str(self.model_type+"_"+self.prediction_mode))
         self.result_dir = os.path.join(self.root_path,"Out_result",str(self.model_type+"_"+self.prediction_mode))
 
 
-        
-        
         

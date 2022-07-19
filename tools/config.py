@@ -14,7 +14,7 @@ def get_args():
     #                     dest='CBCT_folder')
     parser.add_argument('--PCA_all_folder', type=str, default='Dataset/Patient/5/Product_9dvf/DVF_trans_PCAs',
                         dest='PCA_all_folder')
-    parser.add_argument('--val_img_folder', type=str, default='Dataset/Patient/5/Origin/VAL/projection',
+    parser.add_argument('--val_img_folder', type=str, default='Dataset/Patient/5/Product_9dvf/VAL/projections',
                         dest='val_img_folder')
     parser.add_argument('--val_target_folder', type=str, default='Dataset/Patient/5/Product_9dvf/PCAs/',
                         dest='val_target_folder')
@@ -50,6 +50,7 @@ def get_args():
     parser.add_argument("--pca_frame", type=str,
                         default="Out_result/Test_space/PCA_origin/model_cp/anayle/loss_out_csv/out_val.csv",
                         dest="pca_frame")
+    parser.add_argument("--split_num", type=int, default=(153, 300, 300), dest='split_num')
 
     # 函数方法
     parser.add_argument('--cam_method', type=str, default='gradcam',

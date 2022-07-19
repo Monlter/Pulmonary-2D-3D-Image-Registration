@@ -9,6 +9,7 @@ import time
 import cv2
 from tools import data_processing
 import SimpleITK as sitk
+import csv
 
 comparsion_mode = ["model_cp", "data_cp", "heatmap_cp", "lossFunction_cp", "noise_cp"]
 
@@ -19,7 +20,7 @@ def get_poject_path(PROJECT_NAME):
     return root_path
 
 
-def normalization_2d_img(img, method = 'max_min'):
+def normalization_2d_img(img, method='max_min'):
     img = np.array(img)
     if method == 'max_min':
         img = (img - img.min()) / (img.max() - img.min())
@@ -85,6 +86,13 @@ def get_dataMethodName(data_methods):
     if data_methods["multi_angle"]:
         returnstr += "_multiAngle"
     return returnstr
+
+
+def get_csv(filename, header):
+    f = open(filename, 'w', newline='')
+    csv_writer = csv.DictWriter(f, fieldnames=header)
+    csv_writer.writeheader()
+    return csv_writer
 
 
 def get_logger(filename, verbosity=1, name=None):

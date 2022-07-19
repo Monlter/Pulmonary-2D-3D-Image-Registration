@@ -4,6 +4,8 @@ import os
 from tools import tool_functions
 import cv2
 import SimpleITK as sitk
+from tools import estimate_methods
+
 """对数据进行标准差归一化"""
 
 
@@ -127,12 +129,10 @@ def get_preImgName_sequence(imgName, preImg_num):
     return preImgName_sequence[::-1]
 
 
-def load_projection_sequence(projection_dir, projection_name_squence, projection_view=25):
+def load_projection_sequence(projection_dir, projection_name_squence):
     projection_sequence = []
     for projection_name in projection_name_squence:
-        projection = \
-            np.fromfile(os.path.join(projection_dir, projection_name), dtype='float32').reshape((100, 240, 300))[
-                projection_view]
+        projection = np.array(cv2.imread(os.path.join(projection_dir, projection_name), cv2.IMREAD_GRAYSCALE))
         projection_sequence.append(projection)
     return projection_sequence
 
@@ -182,6 +182,27 @@ def input_mode_concat_variable(img: np.ndarray, standardization_method, input_mo
     return input_img
 
 
+def return_input_array(model_type, image_path, image_name, preImg_num, input_mode='origin',
+                       standardization_method="max_min", resize=(120, 120)):
+    cur_img = np.array(cv2.imread(os.path.join(image_path, image_name), cv2.IMREAD_GRAYSCALE))
+    if model_type == "space":
+        input_cur_img = input_mode_concat_variable(cur_img, standardization_method=standardization_method,
+                                                   input_mode_names=input_mode,
+                                                   resize=resize)
+        return input_cur_img
+    else:
+        preImgName_list = get_preImgName_sequence(image_name, preImg_num)
+        pre_imgs_list = load_projection_sequence(image_path, preImgName_list)
+        imgs_list = pre_imgs_list + [cur_img]
+
+        input_imgs = [
+            input_mode_concat_variable(pre_img, standardization_method=standardization_method,
+                                       input_mode_names=input_mode, resize=resize)
+            for pre_img in imgs_list]
+        input_imgs = np.array(input_imgs)
+        return input_imgs
+
+
 def laplacian_img(img):
     blur = cv2.GaussianBlur(img, (7, 7), 1, 1)
     result = cv2.Laplacian(blur, cv2.CV_32F, ksize=1)
@@ -203,10 +224,36 @@ def readDicomSeries(folder_name):
     image_array = sitk.GetArrayFromImage(image)
     return image_array
 
+
+def load_odd_GT(prediction_mode, gt_path, gt_number, data_shape):
+    gt_name = prediction_mode + "_" + gt_number
+    shape = data_shape[prediction_mode]
+    GT = tool_functions.load_odd_file(os.path.join(gt_path, gt_name), shape)
+    return GT
+
+
+def estimate_calc(GT_numpy, predict_numpy, estimate_methods_list):
+    estimate_method_function = {
+        "MAE": estimate_methods.MAE,
+        "MAE_percentage": estimate_methods.MAE_percentage,
+        "R2": estimate_methods.R2,
+        "MAD": estimate_methods.MAE,
+        "MAD_percentage": estimate_methods.MAE_percentage,
+        "NCC": estimate_methods.NCC,
+        "SSIM": estimate_methods.SSIM
+    }
+    estimate_data = {}
+    for estimate_method in estimate_methods_list:
+        estimate_value = estimate_method_function[estimate_method](GT_numpy, predict_numpy)
+        estimate_data[estimate_method] = estimate_value
+    return estimate_data
+
+
 if __name__ == '__main__':
     root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
     reference_img = tool_functions.load_odd_file(
-        os.path.join(root_path, "Dataset/origin/CT_dcm/4d_lung_phantom_w_lesion_atn_2.bin")).reshape(150, 256, 256)[:,100,:]
+        os.path.join(root_path, "Dataset/origin/CT_dcm/4d_lung_phantom_w_lesion_atn_2.bin")).reshape(150, 256, 256)[:,
+                    100, :]
     plt.imshow(reference_img)
     plt.show()
     # plt.subplot(2, 1, 1)

@@ -96,8 +96,14 @@ def train(args, cfg):
         logger = get_logger(filename=os.path.join(exam_instance.log_dir, exam_instance.work_fileName + "_train.log"),
                             verbosity=1,
                             name=exam_instance.work_fileName)
+
+        # 生成csv文件
+        csv_writer = get_csv(
+            filename=os.path.join(exam_instance.csv_dir, exam_instance.work_fileName + "_train.csv"),
+            header=["cur_epoch", "train_loss", "test_loss"])
+
         # 生成run文件
-        writer = SummaryWriter(os.path.join(exam_instance.tensorboard_dir, exam_instance.work_fileName))
+        run_writer = SummaryWriter(exam_instance.tensorboard_dir)
 
         model = model_methods[exam_instance.model_method](exam_instance.inChannel_num).to(device)
         loss_fn = lossfunction_methods[exam_instance.lossFunction_method](loss_wcoeff)
@@ -153,17 +159,16 @@ def train(args, cfg):
             logger.info(
                 'Epoch:[{}/{}]\t train_loss={:.3f}\t test_loss={:.3f}'.format((epoch + 1), args.EPOCH, loss_mse.item(),
                                                                               val_loss.item()))
-            writer.add_scalars("train_progress", {"train_loss": loss_mse.item(), "val_loss": val_loss.item()})
+            csv_writer.writerow({"cur_epoch": (epoch + 1), "train_loss": loss_mse.item(), "test_loss": val_loss.item()})
+            run_writer.add_scalars("train_progress", {"train_loss": loss_mse.item(), "val_loss": val_loss.item()})
 
             if (epoch + 1) % args.EPOCH == 0:
-                cur_ckpt_dir = os.path.join(exam_instance.ckpt_dir,exam_instance.work_fileName)
-                os.makedirs(cur_ckpt_dir, exist_ok=True)
-                cur_ckpt_file_name = os.path.join(cur_ckpt_dir, str(epoch + 1) + ".pth")
+                cur_ckpt_file_name = os.path.join(exam_instance.cur_ckpt_dir, str(epoch + 1) + ".pth")
                 torch.save(model.state_dict(), cur_ckpt_file_name)
 
         logger.info('finish training!')
         logging.shutdown()
-        writer.close()
+        run_writer.close()
 
 
 if __name__ == '__main__':

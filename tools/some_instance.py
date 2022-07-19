@@ -199,7 +199,7 @@ def bin_trans_png(projection_path, shape):
     projection_list = os.listdir(os.path.join(root_path, projection_path))
     for projection_name in projection_list:
         projection_array = np.fromfile(os.path.join(root_path, projection_path, projection_name), dtype="float32")
-        projection_array = projection_array.reshape(shape)
+        projection_array = projection_array.reshape(shape)[25]
         projection_array = tool_functions.normalization_2d_img(projection_array, 'max_min') * 255
         img = Image.fromarray(projection_array)
         img = img.convert("L")  # 转成灰度图
@@ -213,5 +213,5 @@ if __name__ == '__main__':
     # read_file(path="Dataset/Patient/5/Origin/CT")
     # trans_size(input_path='Dataset/Patient/5/Origin/CT', save_path='Dataset/Patient/5/Origin/resize_CT',
     #            shape=(102, 512, 512))
-    # bin_trans_png("Dataset/Patient/5/Origin/VAL/projections", shape=(384, 512))
+    bin_trans_png("Dataset/Digital_phantom/Product_9dvf/VAL/projection", shape=(100, 240, 300))
     pass

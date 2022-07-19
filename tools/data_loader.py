@@ -37,7 +37,7 @@ class Dataset_CBCT(Data.Dataset):
         root_path = tool_functions.get_poject_path("Pulmonary-2D-3D-Image-Registration")
         name_number = self.img_files[index].split("projection")[1]
         img_name = os.path.join(self.img_folder, self.img_files[index])  # 返回第index的文件名
-        img = np.fromfile(img_name, dtype='float32').reshape((100, 240, 300))[25]  # 读取img
+        img = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)  # 读取img
 
         # 获取转换图作为输入图像
         input_img = data_processing.input_mode_concat_variable(img, standardization_method="max_min",
@@ -79,7 +79,6 @@ class Dataset_PCA(Data.Dataset):
         img_name = self.img_files[index]
         name_number = img_name.split("_")[1]
         img_path = os.path.join(self.img_folder, img_name)  # 返回第index文件的路径
-        # img = np.fromfile(img_path, dtype='float32').reshape((100, 240, 300))[25]  # 读取img.bin的所有投影
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         img = np.array(img, dtype="float32")
         # 获取转换图作为输入图像
