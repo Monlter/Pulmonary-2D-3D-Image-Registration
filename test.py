@@ -137,6 +137,5 @@ def exam_test(args, cfg):
 
 
 if __name__ == '__main__':
-    args = config.get_args()
-    cfg = load_cfg(yaml_path="./tools/cfg/pca_space.yaml")
+    args, cfg = load_cfg(yaml_path="./tools/cfg/pca_space.yaml")
     exam_test(args, cfg)

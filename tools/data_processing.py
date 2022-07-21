@@ -117,13 +117,12 @@ def make_subimg(img):
 def get_preImgName_sequence(imgName, preImg_num):
     phase_num = 9
     cur_num = int(imgName.split("_")[1])
-    random_num = imgName.split("_")[2]
     init_name = imgName.split("_")[0]
     preImgName_sequence = []
     for i in range(preImg_num):
         pre_num = cur_num - 1
         pre_num = pre_num + phase_num if pre_num == 0 else pre_num
-        preImgName = init_name + "_" + str(pre_num) + "_" + random_num
+        preImgName = init_name + "_" + str(pre_num) + ".png"
         preImgName_sequence.append(preImgName)
         cur_num = pre_num
     return preImgName_sequence[::-1]
@@ -182,25 +181,42 @@ def input_mode_concat_variable(img: np.ndarray, standardization_method, input_mo
     return input_img
 
 
-def return_input_array(model_type, image_path, image_name, preImg_num, input_mode='origin',
-                       standardization_method="max_min", resize=(120, 120)):
+def get_input_array(model_type, image_path, image_name, preImg_num, pre_image_path=None, input_mode='origin',
+                    standardization_method="max_min", resize=(120, 120)):
+    pre_image_path = pre_image_path if pre_image_path is not None else image_path
     cur_img = np.array(cv2.imread(os.path.join(image_path, image_name), cv2.IMREAD_GRAYSCALE))
     if model_type == "space":
-        input_cur_img = input_mode_concat_variable(cur_img, standardization_method=standardization_method,
+        input_cur_img = input_mode_concat_variable(img=cur_img,
+                                                   standardization_method=standardization_method,
                                                    input_mode_names=input_mode,
                                                    resize=resize)
         return input_cur_img
     else:
         preImgName_list = get_preImgName_sequence(image_name, preImg_num)
-        pre_imgs_list = load_projection_sequence(image_path, preImgName_list)
+        pre_imgs_list = load_projection_sequence(pre_image_path, preImgName_list)
         imgs_list = pre_imgs_list + [cur_img]
 
-        input_imgs = [
-            input_mode_concat_variable(pre_img, standardization_method=standardization_method,
-                                       input_mode_names=input_mode, resize=resize)
-            for pre_img in imgs_list]
+        input_imgs = [input_mode_concat_variable(img=img,
+                                                 standardization_method=standardization_method,
+                                                 input_mode_names=input_mode,
+                                                 resize=resize) for img in imgs_list]
         input_imgs = np.array(input_imgs)
         return input_imgs
+
+
+def get_label(prediction_mode, label_path, image_name, data_shape):
+    # 获取对应的标签
+    if prediction_mode == 'CT':
+        name_number = image_name.split(".")[0].split("projection")
+        label_name = os.path.join(label_path, ("ct" + name_number + ".bin"))
+        shape = data_shape[prediction_mode]
+        label = np.fromfile(label_name, dtype='float32').reshape(shape)
+    elif prediction_mode == 'PCA':
+        name_number = image_name.split('.')[0].split('_')[1]
+        label_name = os.path.join(label_path, ("pca_" + name_number + ".bin"))
+        shape = data_shape[prediction_mode]
+        label = np.fromfile(label_name, dtype='float32').reshape(shape)
+    return label
 
 
 def laplacian_img(img):

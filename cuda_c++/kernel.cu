@@ -40,27 +40,27 @@
 
 #define EPS 1.0E-4
 #define M_PI 3.1415926535
-#define NI_X 300
-#define NI_Z 240
-
-#define SID 750   // in mm
-#define SOD 500  // in mm
+//#define NI_X 512
+//#define NI_Z 384
+//
+//#define SID 1500   // in mm
+//#define SOD 1000  // in mm
 
 //-------------------------------------------------------------------------------------------------------------------------------
-#define L1 500
-//      distance from isocenter to source,in mm
-#define L2 250.0
-//      distance from isocenter to imager, in mm
-#define VOXSIZE_X 1.0 
-#define VOXSIZE_Z 1.0
+//#define L1 1000
+////      distance from isocenter to source,in mm
+//#define L2 500
+////      distance from isocenter to imager, in mm
+//#define VOXSIZE_X 2.0 
+//#define VOXSIZE_Z 2.0
 //	the finest scale voxel size, in unit of mm
 #define TOL 1e-4
 //      the tolarence used in ray tracing, small TOL results in projection error
 #define EPS_xunjia 1e-8
 
 
-#define PIXSIZE_X 1.0
-#define PIXSIZE_Z 1.0
+#define PIXSIZE_X 1
+#define PIXSIZE_Z 1
 //      pixel size in unit of mm
 //------------------------------------------------------------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@
 #define NTHREAD_PER_BLOCK 256
 
 #define DEVICENUMBER 3
-#define PIXELSIZE 1.0  // in mm
+#define PIXELSIZE 1  // in mm
 
 int deviceCount;
 cudaDeviceProp dP;
@@ -106,7 +106,7 @@ cudaDeviceProp dP;
 float orbitz(int nsize, int zdiff, int nview, int view, int ftype);
 
 __device__ int frt3d_kernel(int* SIZE, float* phantom, float* From, float* To, int* Vox, int* Direc, int* Vdim, float* Length, int nx, int nz);
-__global__ void forwardProj2d(float* dest_projection, float* phantom, int nx, int nz, float vx, float vz, float sine, float cosin);
+__global__ void forwardProj2d(float* dest_projection, float* phantom, int nx, int nz, float vx, float vz, float sine, float cosin, float SID, float SOD, int NI_X, int NI_Z);
 __device__ float forwardProjRay(float* phantom, float alphaMin, float alphaMax, int startDim, int direction[3], float dAlpha[3], float length, float xi, float yi, float zi, float xs, float ys, float zs,
 	int nx, int nz, float vx, float vz);
 __global__ void backwardProj2d(float* dest, float* proj_diff2d, int currentProjIdx, int TotalProjNum, int nx, int nz, float vx, float vz, float sine_value, float cosin_value);
@@ -243,11 +243,10 @@ int main(int argc, char* argv[])
 	float* h_prj2d, * d_temp, * d_prj3d, * d_prj2d, * CT_ref, * x3d, * d_x3d, * x3d_moving, * h_sine, * h_cosin, * h_angle;
 	char* cmd, * projfile1, * anglefile1, * priorimage1, * outfile1;
 	int size[3], dsize1[3],dsize2[3], pos[2];
-	float voxelsize, binsize;
-	int m, DIM, nx, nz, nview, VoxelNum, NPRJ, nview1,nview2, ITNUM, flag, orbitype, i, j, k, n, ii, jj, kk;
-	char str_number[3], str_infolder[50], str_outfolder[50], dvf_path[100],ct_path[100],model_class[20],dvf_list[20],str_infilename[60], str_outfilename[60], str_infile[200], str_ct_outfile[200], str_projection_outfile[200];
+	float voxelsize, binsize, SID, SOD, L1, L2, VOXSIZE_X, VOXSIZE_Z;
+	int m, DIM, nx, nz, nview, VoxelNum, NPRJ, nview1,nview2, ITNUM, flag, orbitype, i, j, k, n, ii, jj, kk, NI_X, NI_Z;
+	char str_angle_file[100],str_number[3], str_infolder[200], str_outfolder[200], dvf_path[500],ct_path[500],model_class[20],dvf_list[20],str_infilename[60], str_outfilename[60], str_infile[200], str_ct_outfile[500], str_projection_outfile[500];
 	int datasetr, datasetp;
-	double sid, sod;
 
 
 
@@ -257,30 +256,18 @@ int main(int argc, char* argv[])
 	{
 		/*std::cout << argv[0]+1 << std::endl;*/
 		if (!strcmp(argv[0] + 1, "size")) GETOPTSIZ(size)   //size :256*256*150
-		else if (!strcmp(argv[0] + 1, "view1")) GETOPTINT(nview1)  //nview1:100
-		else if (!strcmp(argv[0] + 1, "view2")) GETOPTINT(nview2)  //nview1:100
+		else if (!strcmp(argv[0] + 1, "view")) GETOPTINT(nview1)  //nview1:100
 		else if (!strcmp(argv[0] + 1, "voxelsize")) GETOPTFLT(voxelsize)  //voxelsize:1.0
 		else if (!strcmp(argv[0] + 1, "itnum")) GETOPTINT(ITNUM)   //itnum: 30
 
-		else if (!strcmp(argv[0] + 1, "dsize1")) GETOPTSIZ(dsize1)  //dsize1:300*240*100
-		else if (!strcmp(argv[0] + 1, "dsize2")) GETOPTSIZ(dsize2)  //dsize1:300*240*100
-		else if (!strcmp(argv[0] + 1, "binsize")) GETOPTFLT(binsize)  //binsize:1.0
-		else if (!strcmp(argv[0] + 1, "pos"))
-		{
-			pos[0] = atoi(argv[1]);   //pos[0]:75
-			argc--; argv++;
-			pos[1] = atoi(argv[1]);   //pos[1]:0 
-			argc--; argv++;
-		}
+		else if (!strcmp(argv[0] + 1, "dsize")) GETOPTSIZ(dsize1)  //dsize1:300*240*100
 		else if (!strcmp(argv[0] + 1, "geo"))
 		{
-			sid = atof(argv[1]);  //sid :750
+			SID = atof(argv[1]);  //sid :1500
 			argc--; argv++;
-			sod = atof(argv[1]);   //sod:500
+			SOD = atof(argv[1]);   //sod:1000
 			argc--; argv++;
 		}
-		else if (!strcmp(argv[0] + 1, "180")) flag = 1;
-		else if (!strcmp(argv[0] + 1, "orbit")) GETOPTINT(orbitype)  //orbitype:1
 		else usage(cmd);
 	}
 
@@ -290,12 +277,10 @@ int main(int argc, char* argv[])
 		size[1] = size[0];
 	}
 
-	if (argc != 4)
+	if (argc != 1)
 		usage(cmd);
-	priorimage1 = argv[0]; //4d_lung_phantom_w_lesion_atn_1.bin  
-	projfile1 = argv[1];  //4d_lung_phantom_w_lesion_atn_3.256x150.300x240x20.noi
-	anglefile1 = argv[2]; // new_anglefile_100angle 
-	outfile1 = argv[3]; //result.img
+	anglefile1 = argv[0];  
+
 
 	int voxelNumber = size[0] * size[1] * size[2];
 	int maxits = ITNUM; //30
@@ -307,6 +292,10 @@ int main(int argc, char* argv[])
 	DIM = 3;
 	nx = size[0];
 	nz = size[2];
+	NI_X = dsize1[0];
+	NI_Z = dsize1[1];
+	VOXSIZE_X = voxelsize;
+	VOXSIZE_Z = voxelsize;
 
 	cublasStatus status = cublasInit();
 	if (status != CUBLAS_STATUS_SUCCESS)
@@ -317,10 +306,10 @@ int main(int argc, char* argv[])
 	}
 	//initialize CUBLAS
 
-	printf("Object prior image_1 size: %dx%dx%d, from file: %s\n", size[0], size[1], size[2], priorimage1);
+	printf("Object prior image_1 size: %dx%dx%d\n", size[0], size[1], size[2]);
 	printf("Projection data dsize1: %d x %d x %d\n", dsize1[0], dsize1[1], dsize1[2]);
 	printf("view1 = %d, voxelsize = %f, itnum = %d  \n", nview1, voxelsize, ITNUM);
-	printf("SID = %f,   SOD = %f,  binsize = %f \n", sid, sod, binsize);
+	printf("SID = %f,   SOD = %f\n", SID, SOD);
 
 	/*************************************************************************************************************************
 	*********************************正式程序从这里开始******************************************************************************
@@ -432,65 +421,66 @@ int main(int argc, char* argv[])
 
 
 //********  批量生成  **********************************************************************************************
-	//IMGREAD("4d_lung_phantom_w_lesion_atn_1.bin ", CT_ref, voxelNumber, 0, 1); //读取参考相位的CT
-	//std::cout << "CT_ref" << std::endl;
-	//IMGREAD("new_anglefile_100angle", h_angle, dsize1[2], 0, 1);   //  加载投影角度---> h_angle
-	//std::cout << "angle" << std::endl;
-	//for (i = 0; i < dsize1[2]; i++)
-	//{
-	//	h_angle[i] = h_angle[i] * M_PI / 180;
-	//	h_sine[i] = sin(h_angle[i] - M_PI);
-	//	h_cosin[i] = cos(h_angle[i] + M_PI);
-	//}
-	////获得文件夹下的文件名称
-	//
-	///*strcpy(str_infolder, "E:/code/pycharm/CNN_PCA/Dataset/DVF_gen/");
-	//strcpy(str_outfolder, "E:/code/pycharm/CNN_PCA/Dataset/");*/
-	//strcpy(str_infolder, "E:\\code\\pycharm\\CNN_PCA\\Dataset\\gen_method(DVF)\\DVFs\\");
-	//strcpy(str_outfolder, "E:\\code\\pycharm\\CNN_PCA\\Dataset\\gen_method(DVF)\\");
-	////read_file(str_infolder);
-	////读取文件名
-	//FILE* fp1;
-	//if (fopen_s(&fp1, "file_name.txt", "r") != 0)
-	//	std::cout << "加载file_name失败" <<std::endl;
-	//while (!feof(fp1))
-	//{
-	//	fgets(str_infilename, sizeof(str_infilename), fp1); //获取文件夹下的所有文件
-	//	str_infilename[strlen(str_infilename) - 1] = 0;  //去除最后的换行符
-	//	//// 打开文件名
-	//	strcpy(str_infile, str_infolder);      
-	//	strcat(str_infile, str_infilename);   
-	//	std::cout << str_infile << std::endl;
-	//	//// 保存文件名
-	//	strcpy(str_outfilename, str_infilename + 4);
-	//	strcpy(str_ct_outfile,str_outfolder);
-	//	strcat(str_ct_outfile, "CTs/CT_");
-	//	strcat(str_ct_outfile,str_outfilename);
-	//	// *******生成CT操作*******************************************************
-	//	IMGREAD(str_infile, x3d_moving, 3 * voxelNumber, 0, 1);  //读取dvf
-	//	transformvolumeGPU(CT_ref, warps[0][0],x3d_moving,size);
-	//	IMGWRITE(str_ct_outfile, warps[0][0], voxelNumber);    //保存转换后的CT
-	//	std::cout << str_ct_outfile << "已经保存" << std::endl;
-	//	 //************进行投影******************************
-	//	//IMGREAD(str_infile, warps[0][0], voxelNumber, 0, 1);
-	//	cudaMemcpy(d_temp, warps[0][0], sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
-	//	cudaMemcpy(temp[0][0],d_temp,sizeof(float)*size[0]*size[1]*size[2],cudaMemcpyDeviceToHost);
-	//	for (n = 0; n < nview; n++)  // nview:100
-	//	{
-	//		sin_value = h_sine[n];
-	//		cos_value = h_cosin[n];
-	//		forwardProj2d << <nblocks, NTHREAD_PER_BLOCK >> > (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value);  //投影d_temp（3）到 d_prj2d(2)
-	//		cudaThreadSynchronize();   //该方法将停止CPU端线程的执行，直到GPU端完成之前CUDA的任务
-	//		cudaMemcpy(&d_prj3d[n * dsize1[0] * dsize1[1]], d_prj2d, sizeof(float) * dsize1[0] * dsize1[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
-	//	}
-	//	cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
-	//	strcpy(str_projection_outfile, str_outfolder);
-	//	strcat(str_projection_outfile, "projections/projection_");
-	//	strcat(str_projection_outfile, str_outfilename);
-	//	IMGWRITE(str_projection_outfile, h_proj[0][0], datasetp);
-	//	std::cout << str_projection_outfile << "投影已经生成" << std::endl;
-	//}
-	//fclose(fp1);
+	IMGREAD("patient_5_ct_0.bin ", CT_ref, voxelNumber, 0, 1); //读取参考相位的CT
+	std::cout << "CT_ref" << std::endl;
+	IMGREAD(anglefile1, h_angle, dsize1[2], 0, 1);   //  加载投影角度---> h_angle
+	std::cout << "angle" << std::endl;
+	for (i = 0; i < dsize1[2]; i++)
+	{
+		h_angle[i] = h_angle[i] * M_PI / 180;
+		h_sine[i] = sin(h_angle[i] - M_PI);
+		h_cosin[i] = cos(h_angle[i] + M_PI);
+	}
+	//获得文件夹下的文件名称
+	strcpy(str_infolder, "E:\\code\\python\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\5\\Product_9dvf\\resize_CTs\\");
+	strcpy(str_outfolder, "E:\\code\\python\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\5\\Product_9dvf\\");
+	//读取文件名
+	FILE* fp1;
+	if (fopen_s(&fp1, "file_name.txt", "r") != 0)
+		std::cout << "加载file_name失败" <<std::endl;
+	while (!feof(fp1))
+	{
+		fgets(str_infilename, sizeof(str_infilename), fp1); //获取文件夹下的所有文件
+		str_infilename[strlen(str_infilename) - 1] = 0;  //去除最后的换行符
+		//// 打开文件名
+		strcpy(str_infile, str_infolder);      
+		strcat(str_infile, str_infilename);   
+		std::cout <<  str_infile << std::endl;
+		// 获取保存文件名
+		strcpy(str_outfilename, str_infilename + 3);
+
+		//// *******生成CT操作*******************************************************
+		//IMGREAD(str_infile, x3d_moving, 3 * voxelNumber, 0, 1);  //读取dvf
+		//transformvolumeGPU(CT_ref, warps[0][0],x3d_moving,size);
+		//////保存转换后的ct
+		//strcpy(str_ct_outfile,str_outfolder);
+		//strcat(str_ct_outfile, "CTs\\CT_");
+		//strcat(str_ct_outfile, str_outfilename);
+		//IMGWRITE(str_ct_outfile, warps[0][0], voxelNumber);    
+		//std::cout << str_ct_outfile << "已经保存" << std::endl;
+
+		 //************进行投影******************************
+
+		IMGREAD(str_infile, warps[0][0], voxelNumber, 0, 1);
+		/*IMGREAD("C:\\Users\\ck\\Desktop\\ct_1_1", warps[0][0], voxelNumber, 0, 1);*/
+		cudaMemcpy(d_temp, warps[0][0], sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
+		cudaMemcpy(temp[0][0],d_temp,sizeof(float)*size[0]*size[1]*size[2],cudaMemcpyDeviceToHost);
+		for (n = 0; n < nview; n++)  // nview:100
+		{
+			sin_value = h_sine[n];
+			cos_value = h_cosin[n];
+			forwardProj2d << <nblocks, NTHREAD_PER_BLOCK >> > (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value,SID,SOD,NI_X,NI_Z);  //投影d_temp（3）到 d_prj2d(2)
+			cudaThreadSynchronize();   //该方法将停止CPU端线程的执行，直到GPU端完成之前CUDA的任务
+			cudaMemcpy(&d_prj3d[n * dsize1[0] * dsize1[1]], d_prj2d, sizeof(float) * dsize1[0] * dsize1[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
+		}
+		cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
+		strcpy(str_projection_outfile, str_outfolder);
+		strcat(str_projection_outfile, "projections\\projection_");
+		strcat(str_projection_outfile, str_outfilename);
+		IMGWRITE(str_projection_outfile, h_proj[0][0], datasetp);
+		std::cout << str_projection_outfile << "投影已经生成" << std::endl;
+	}
+	fclose(fp1);
 
 
 
@@ -515,31 +505,31 @@ int main(int argc, char* argv[])
 //*************** 2.2 批量DVF转CT ***********************************************
 	//读入一列DVF,其内含100个DVF，并依次提取单个DVF，用于变形参考相位图像；
 	//读取文件名
-	FILE* fp1;
-	if (fopen_s(&fp1, "G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\input_list.txt", "r") != 0)
-		std::cout << "加载model_class.txt失败" <<std::endl;
-	FILE* fp2;
-	if (fopen_s(&fp2, "G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\out_list.txt", "r") != 0)
-		std::cout << "加载list.txt失败" << std::endl;
-	while (!feof(fp1))
-	{
-		fgets(str_infile, sizeof(str_infile), fp1); //获取文件夹下的所有文件
-		str_infile[strlen(str_infile) - 1] = 0;  //去除最后的换行符
-		fgets(str_ct_outfile, sizeof(str_ct_outfile), fp2); //获取文件夹下的所有文件
-		str_ct_outfile[strlen(str_ct_outfile) - 1] = 0;  //去除最后的换行符
-			
-		//读取文件
-		IMGREAD(str_infile, x3d_moving, 3 * voxelNumber, 0, 1);    // 加载m个dvf，保存在x3d_moving 中
-		std::cout << str_infile + strlen("G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\dvf\\") << ":\tdvf已加载\t";
-		// 读入参考相位CT图像
-		IMGREAD("4d_lung_phantom_w_lesion_atn_1.bin ", CT_ref, voxelNumber, 0, 1);
-		// DVF + CT_ref进行CT的变形，并保存在warp中
-		transformvolumeGPU(CT_ref, warps[0][0], x3d_moving, size);
-		IMGWRITE(str_ct_outfile, warps[0][0], voxelNumber);
-		std::cout << "ct已经保存" << std::endl;
+	//FILE* fp1;
+	//if (fopen_s(&fp1, "G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\input_list.txt", "r") != 0)
+	//	std::cout << "加载model_class.txt失败" <<std::endl;
+	//FILE* fp2;
+	//if (fopen_s(&fp2, "G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\out_list.txt", "r") != 0)
+	//	std::cout << "加载list.txt失败" << std::endl;
+	//while (!feof(fp1))
+	//{
+	//	fgets(str_infile, sizeof(str_infile), fp1); //获取文件夹下的所有文件
+	//	str_infile[strlen(str_infile) - 1] = 0;  //去除最后的换行符
+	//	fgets(str_ct_outfile, sizeof(str_ct_outfile), fp2); //获取文件夹下的所有文件
+	//	str_ct_outfile[strlen(str_ct_outfile) - 1] = 0;  //去除最后的换行符
+	//		
+	//	//读取文件
+	//	IMGREAD(str_infile, x3d_moving, 3 * voxelNumber, 0, 1);    // 加载m个dvf，保存在x3d_moving 中
+	//	std::cout << str_infile + strlen("G:\\Monlter\\PCA\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Test_9dvf\\Output\\dvf\\") << ":\tdvf已加载\t";
+	//	// 读入参考相位CT图像
+	//	IMGREAD("4d_lung_phantom_w_lesion_atn_1.bin ", CT_ref, voxelNumber, 0, 1);
+	//	// DVF + CT_ref进行CT的变形，并保存在warp中
+	//	transformvolumeGPU(CT_ref, warps[0][0], x3d_moving, size);
+	//	IMGWRITE(str_ct_outfile, warps[0][0], voxelNumber);
+	//	std::cout << "ct已经保存" << std::endl;
 
-	}
-	std::cout << "here is ok...test1" << std::endl;
+	//}
+	//std::cout << "here is ok...test1" << std::endl;
 
 	
 
@@ -1145,7 +1135,7 @@ __global__ void DVF_inverse(float* d_x, int size)
 }
 
 __global__ void fprj2d(float* dest, float* phantom, int NPRJ, int nx, int nz, float vx, float sin_value, float cos_value,
-	int* d_vdim, float* d_length)
+	int* d_vdim, float* d_length,float SID ,float SOD,int NI_X,int NI_Z)
 {
 	const int tid = (blockIdx.y * NBLOCKX + blockIdx.x) * blockDim.x + threadIdx.x;
 
@@ -1319,9 +1309,10 @@ __device__ int frt3d_kernel(int* ssize, float* phantom, float* from, float* to, 
 }
 
 
-__global__ void forwardProj2d(float* dest_projection, float* phantom, int nx, int nz, float vx, float vz, float sine, float cosin)
+__global__ void forwardProj2d(float* dest_projection, float* phantom, int nx, int nz, float vx, float vz, float sine, float cosin,float SID,float SOD,int NI_X,int NI_Z)
 {
-
+	float L1 = SOD;
+	float L2 = SID - SOD;
 	const int tid = (blockIdx.y * NBLOCKX + blockIdx.x) * blockDim.x + threadIdx.x;
 
 	if (tid < NI_X * NI_Z) // for each projection

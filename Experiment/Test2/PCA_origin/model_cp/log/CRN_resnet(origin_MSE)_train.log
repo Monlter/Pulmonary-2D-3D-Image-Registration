@@ -1,4 +1,0 @@
-[2021-08-26 11:22:18,430] Experiment:Test2	data_method:PCA_origin	model:CRN_resnet	dataMethod:origin	loss_function:{'MSE': <class 'tools.loss_tool.PCA_loss'>, 'Smooth_MSE': <class 'tools.loss_tool.PCA_smoothL1Loss'>, 'log_cosh': <class 'tools.loss_tool.Log_cosh'>}
-[2021-08-26 11:22:18,430] Epoch:200	data_num:900	data_ratio:0.3
-[2021-08-26 11:22:18,430] ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-[2021-08-26 11:22:18,430] start training!

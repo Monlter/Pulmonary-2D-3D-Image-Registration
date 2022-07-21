@@ -220,10 +220,10 @@ class ConvLSTM_Liner(nn.Module):
         return out
 
 
-class ConvLSTM_CBCT(nn.Module):
+class ConvLSTM_CT(nn.Module):
     def __init__(self, input_dim, hidden_dim=150, kernel_size=(3, 3), num_layers=3,
                  batch_first=True, bias=True, return_all_layers=False):
-        super(ConvLSTM_CBCT, self).__init__()
+        super(ConvLSTM_CT, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.kernel_size = kernel_size
@@ -237,7 +237,7 @@ class ConvLSTM_CBCT(nn.Module):
 
     def forward(self, input_tensor):
         layer_output_list, last_state_list = self.convlstm(input_tensor)
-        x = layer_output_list[-1][:, -1, ...]  # 取出num_layer的最后一层中的最后一个seq_len的结果
+        x = layer_output_list[-1][:, -1, ...]     # 取出num_layer的最后一层中的最后一个seq_len的结果
         out = x
         return out
 

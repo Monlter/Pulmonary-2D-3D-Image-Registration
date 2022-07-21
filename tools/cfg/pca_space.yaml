@@ -1,10 +1,10 @@
 # 基础设置
-DATASET: 'Patient/5'
+DATASET: 'Dataset/Patient/5/'
 MODEL_TYPE: space
 PREDICTION_MODE: PCA
 DATA_SHAPE: {
   'PCA': [3,],
-  'CBCT': [306,600,600],
+  'CT': [306,600,600],
   'DVF': [3,306,600,600],
   'PROJECTION': [512,384]
 }

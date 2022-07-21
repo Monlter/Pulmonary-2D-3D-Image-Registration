@@ -1,0 +1,26 @@
+# 基础设置
+DATASET: 'Dataset/Digital_phantom/'
+MODEL_TYPE: spaceAndTime
+PREDICTION_MODE: PCA
+DATA_SHAPE: {
+  'PCA': [3,],
+  'CT': [150,256,256],
+  'DVF': [3,150,256,256],
+  'PROJECTION': [240,300]
+}
+
+EXAM_PROCESS:
+  - NAME: test_1
+    COMPARE_MODE: model_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTM
+    LOSSFUNCTION: MSE
+
+
+
+
+
+
+
+
+

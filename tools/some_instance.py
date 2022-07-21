@@ -208,10 +208,22 @@ def bin_trans_png(projection_path, shape):
         print("转{}文件成功".format(projection_name))
 
 
+def rename(path):
+    root_path = tool_functions.get_poject_path('Pulmonary-2D-3D-Image-Registration')
+    path = os.path.join(root_path, path)
+    file_name_list = os.listdir(path)
+    for file_name in file_name_list:
+        old_file = os.path.join(path, file_name)
+        new_file = os.path.join(path, file_name.replace("PCA", "pca") + ".bin")
+        os.rename(old_file, new_file)
+        print(new_file, "保存成功！")
+
+
 if __name__ == '__main__':
     # PCA_train_by_DVFs(path="Dataset/Patient/5")
     # read_file(path="Dataset/Patient/5/Origin/CT")
     # trans_size(input_path='Dataset/Patient/5/Origin/CT', save_path='Dataset/Patient/5/Origin/resize_CT',
     #            shape=(102, 512, 512))
-    bin_trans_png("Dataset/Digital_phantom/Product_9dvf/VAL/projection", shape=(100, 240, 300))
+    # bin_trans_png("Dataset/Digital_phantom/Product_9dvf/VAL/projection", shape=(100, 240, 300))
+    rename("Dataset/Patient/5/Origin/PCA")
     pass

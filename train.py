@@ -1,6 +1,6 @@
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from tools.data_loader import Dataset_CBCT, Dataset_PCA
+from tools.data_loader import Dataset
 from torch.utils.data import DataLoader
 import math
 from tools.loss_tool import PCA_loss, Log_cosh, PCA_smoothL1Loss
@@ -29,26 +29,19 @@ def val(Dataset_loader, net, loss_function, device):
 def load_cfg(yaml_path):
     with open(yaml_path, 'r', encoding='utf-8') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
-    return cfg
+        args = get_args(dataset=cfg["DATASET"])
+    return args, cfg
 
 
 def train(args, cfg):
     # 初始化
     exam_process_dict = cfg['EXAM_PROCESS']
-    total_exam_num = len(exam_process_dict)
-    cur_exam_num = 0
 
     # 模型方式
     model_methods = {
         "CNN": CNN_model.CNN_net,
         "Unet": partial(Unet_model.UNet_net, n_classes=3),
         "Resnet": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2]),
-        "Resnet_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_outAttention="CBAM"),
-        "Resnet_outSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_outAttention="SPA"),
-        "Resnet_inCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="CBAM"),
-        "Resnet_outSE": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_outAttention="SE"),
-        "Resnet_inSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SPA"),
-        "Resnet_inSE": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE"),
         "Resnet_allSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
                                  is_outAttention="SPA"),
         "Resnet_allCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
@@ -67,6 +60,7 @@ def train(args, cfg):
                                       is_outAttention="SPA"),
         "Resnet_inSE_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
                                        is_outAttention="CBAM"),
+        "ConvLSTM": partial(convLSTM_2D.ConvLSTM_CT),
     }
     # 损失函数方式
     lossfunction_methods = {
@@ -74,20 +68,13 @@ def train(args, cfg):
         "Smooth_MSE": PCA_smoothL1Loss,
         "log_cosh": Log_cosh
     }
-    # 数据加载方式
-    dataset_process_methods = {
-        "pca": Dataset_PCA,
-        "cbct": Dataset_CBCT,
-        "dvf": Dataset_CBCT
-    }
     setup_seed(12)
     # 超参数设定
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     batch_size = args.batch_size
     loss_wcoeff = torch.FloatTensor([2 / math.sqrt(6), 1 / math.sqrt(6), 1 / math.sqrt(6)]).to(device)
-    img_folder = os.path.join(args.root_path, args.img_folder)
-    target_folder = os.path.join(args.root_path, args.CBCT_folder) if cfg["PREDICTION_MODE"] == "cbct" \
-        else os.path.join(args.root_path, args.PCA_folder)
+    img_folder = args.train_DRR_dir
+    label_folder = args.CT_dir if cfg["PREDICTION_MODE"] == "CT" else args.PCA_dir
 
     # 进行各个exam
     for exam_cfg in exam_process_dict:
@@ -110,9 +97,14 @@ def train(args, cfg):
         opt = torch.optim.Adam(model.parameters(), lr=args.lr)
         scheduler = ReduceLROnPlateau(opt, mode='min', verbose=True, patience=3)
         # 数据加载
-        dataset = dataset_process_methods[exam_instance.prediction_mode](img_folder, target_folder,
-                                                                         exam_instance.input_mode,
-                                                                         exam_instance.model_type)
+        dataset = Dataset(img_dir=img_folder,
+                          label_dir=label_folder,
+                          input_mode=exam_instance.input_mode,
+                          preImg_num=args.preImg_num,
+                          model_type=exam_instance.model_type,
+                          prediction_mode=exam_instance.prediction_mode,
+                          data_shape=exam_instance.data_shape
+                          )
         test_size = int(len(dataset) * args.val_ratio)
         train_size = int(len(dataset) - test_size)
         train_dataset, test_dataset = torch.utils.data.random_split(dataset=dataset,
@@ -142,6 +134,7 @@ def train(args, cfg):
             loss_mse = 0
             for i, (imgs, target) in enumerate(train_data_loader):
                 imgs = imgs.to(device)
+                print(imgs.shape)
                 target = target.to(device)
                 prediction = model(imgs)
                 loss_item = loss_fn(target, prediction)
@@ -172,6 +165,5 @@ def train(args, cfg):
 
 
 if __name__ == '__main__':
-    args = get_args()
-    cfg = load_cfg(yaml_path="./tools/cfg/pca_space.yaml")
+    args, cfg = load_cfg(yaml_path="./tools/cfg/pca_spaceAndTime.yaml")
     train(args, cfg)
