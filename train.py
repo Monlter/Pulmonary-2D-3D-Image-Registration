@@ -60,7 +60,22 @@ def train(args, cfg):
                                       is_outAttention="SPA"),
         "Resnet_inSE_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
                                        is_outAttention="CBAM"),
-        "ConvLSTM": partial(convLSTM_2D.ConvLSTM_CT),
+        "ConvLSTMLiner_h10_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2),
+        "ConvLSTMLiner_h30_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2),
+        "ConvLSTMLiner_h50_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=50, num_layers=2),
+        "ConvLSTMLiner_h100_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=100, num_layers=2),
+        "ConvLSTMLiner_h10_l4": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=4),
+        "ConvLSTMLiner_h10_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=8),
+        "ConvLSTMLiner_h10_l16": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=16),
+        "ConvLSTMLiner_h30_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=8),
+        "ConvLSTMLiner_h50_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=50, num_layers=8),
+        "ConvLSTMLiner_h100_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=100, num_layers=8),
+        "ConvLSTMLiner_h100_l2_pM2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
+                                            is_pooling=["Maxpool", "2"]),
+        "ConvLSTMLiner_h100_l2_pA2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
+                                            is_pooling=["Avgpool", "2"]),
+        "ConvLSTMLiner_h100_l2_pC2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
+                                            is_pooling=["Convpool", "2"]),
     }
     # 损失函数方式
     lossfunction_methods = {
@@ -134,7 +149,6 @@ def train(args, cfg):
             loss_mse = 0
             for i, (imgs, target) in enumerate(train_data_loader):
                 imgs = imgs.to(device)
-                print(imgs.shape)
                 target = target.to(device)
                 prediction = model(imgs)
                 loss_item = loss_fn(target, prediction)

@@ -10,13 +10,152 @@ DATA_SHAPE: {
 }
 
 EXAM_PROCESS:
-  - NAME: test_1
-    COMPARE_MODE: model_cp
-    INPUT_MODE: origin
-    MODEL: ConvLSTM
-    LOSSFUNCTION: MSE
+#  - NAME: test_1
+#    COMPARE_MODE: model_cp
+#    INPUT_MODE: origin
+#    MODEL: ConvLSTMLiner_h10_l2
+#    LOSSFUNCTION: MSE
+#    PREIMG_NUM: 8
+#
+#  - NAME: test_2
+#    COMPARE_MODE: model_cp
+#    INPUT_MODE: origin
+#    MODEL: ConvLSTMLiner_h10_l2
+#    LOSSFUNCTION: MSE
+#    PREIMG_NUM: 7
+#
+#  - NAME: test_3
+#    COMPARE_MODE: model_cp
+#    INPUT_MODE: origin
+#    MODEL: ConvLSTMLiner_h10_l2
+#    LOSSFUNCTION: MSE
+#    PREIMG_NUM: 6
+#
+#  - NAME: test_4
+#      COMPARE_MODE: model_cp
+#      INPUT_MODE: origin
+#      MODEL: ConvLSTMLiner_h10_l2
+#      LOSSFUNCTION: MSE
+#      PREIMG_NUM: 5
+#
+#  - NAME: test_4
+#      COMPARE_MODE: model_cp
+#      INPUT_MODE: origin
+#      MODEL: ConvLSTMLiner_h10_l2
+#      LOSSFUNCTION: MSE
+#      PREIMG_NUM: 4
+#
+#  - NAME: test_5
+#      COMPARE_MODE: model_cp
+#      INPUT_MODE: origin
+#      MODEL: ConvLSTMLiner_h10_l2
+#      LOSSFUNCTION: MSE
+#      PREIMG_NUM: 3
+#
+#  - NAME: test_6
+#      COMPARE_MODE: model_cp
+#      INPUT_MODE: origin
+#      MODEL: ConvLSTMLiner_h10_l2
+#      LOSSFUNCTION: MSE
+#      PREIMG_NUM: 2
+#
+#  - NAME: test_7
+#      COMPARE_MODE: model_cp
+#      INPUT_MODE: origin
+#      MODEL: ConvLSTMLiner_h10_l2
+#      LOSSFUNCTION: MSE
+#      PREIMG_NUM: 1
 
+  - NAME: test_8
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h100_l2_pC2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
 
+  - NAME: test_9
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h100_l2_pA2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_10
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h100_l2_pM2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_11
+        COMPARE_MODE: model_cp
+        INPUT_MODE: origin
+        MODEL: ConvLSTMLiner_h100_l8
+        LOSSFUNCTION: MSE
+        PREIMG_NUM: 1
+
+  - NAME: test_12
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h50_l8
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_13
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h30_l8
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_14
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h10_l16
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_15
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h10_l8
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_16
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h10_l4
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_17
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h100_l2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_18
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h50_l2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_19
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h30_l2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
+
+  - NAME: test_20
+      COMPARE_MODE: model_cp
+      INPUT_MODE: origin
+      MODEL: ConvLSTMLiner_h10_l2
+      LOSSFUNCTION: MSE
+      PREIMG_NUM: 1
 
 
 

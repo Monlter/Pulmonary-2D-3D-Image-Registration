@@ -191,7 +191,7 @@ class ConvLSTM(nn.Module):
 
 class ConvLSTM_Liner(nn.Module):
     def __init__(self, input_dim, hidden_dim=10, output_dim=3, kernel_size=(3, 3), num_layers=2,
-                 batch_first=True, bias=True, return_all_layers=False):
+                 batch_first=True, bias=True, return_all_layers=False, is_pooling=None):
         super(ConvLSTM_Liner, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -204,15 +204,24 @@ class ConvLSTM_Liner(nn.Module):
         self.return_all_layers = return_all_layers
         self.convlstm = ConvLSTM(input_dim, hidden_dim, kernel_size, num_layers,
                                  batch_first, bias, return_all_layers)
-        # self.max_pool = nn.AdaptiveMaxPool2d(pooling_size)
-        # self.avg_pool = nn.AdaptiveAvgPool2d(pooling_size)
-        # self.scale_conv = nn.Conv2d(hidden_dim,hidden_dim,kernel_size=4,stride=4)
-        self.fc1 = nn.Linear(hidden_dim * 120 * 120, 1024)
+        self.pooling_method, self.pooling_scale = is_pooling if is_pooling is not None else (False, 1)
+        self.pooling_scale = int(self.pooling_scale)
+        if self.pooling_method:
+            if self.pooling_method == "MaxPool":
+                self.pooling = nn.MaxPool2d(self.pooling_scale)
+            elif self.pooling_method == "AvgPool":
+                self.pooling = nn.AvgPool2d(self.pooling_scale)
+            else:
+                self.pooling = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=self.pooling_scale,
+                                         stride=self.pooling_scale)
+        self.fc1 = nn.Linear(hidden_dim * int(120 / self.pooling_scale) * int(120 / self.pooling_scale), 1024)
         self.fc2 = nn.Linear(1024, output_dim)
 
     def forward(self, input_tensor):
         layer_output_list, last_state_list = self.convlstm(input_tensor)
         x = layer_output_list[-1][:, -1, ...]  # 取出num_layer的最后一层中的最后一个seq_len的结果
+        if self.pooling_method:
+            x = self.pooling(x)
         x = x.view(x.shape[0], -1)
         fc1 = self.fc1(x)
         fc2 = self.fc2(fc1)
@@ -237,8 +246,6 @@ class ConvLSTM_CT(nn.Module):
 
     def forward(self, input_tensor):
         layer_output_list, last_state_list = self.convlstm(input_tensor)
-        x = layer_output_list[-1][:, -1, ...]     # 取出num_layer的最后一层中的最后一个seq_len的结果
+        x = layer_output_list[-1][:, -1, ...]  # 取出num_layer的最后一层中的最后一个seq_len的结果
         out = x
         return out
-
-
