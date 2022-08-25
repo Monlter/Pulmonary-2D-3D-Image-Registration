@@ -20,7 +20,7 @@ class InstanceExam(ExamTemplate):
         log_dir = os.path.join(self.result_dir, self.compare_mode, "log")
         csv_dir = os.path.join(self.result_dir, self.compare_mode, 'csv')
         tensorboard_dir = os.path.join(self.result_dir, self.compare_mode, "run", self.work_fileName)
-        cur_ckpt_dir = os.path.join(self.ckpt_dir, self.work_fileName)
+        cur_ckpt_dir = os.path.join(self.ckpt_dir, self.compare_mode, self.work_fileName)
         os.makedirs(cur_ckpt_dir, exist_ok=True)
         os.makedirs(log_dir, exist_ok=True)
         os.makedirs(tensorboard_dir, exist_ok=True)

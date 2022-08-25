@@ -10,6 +10,7 @@ DATA_SHAPE: {
 }
 
 EXAM_PROCESS:
+
   - NAME: test_1
     COMPARE_MODE: model_cp
     INPUT_MODE: origin

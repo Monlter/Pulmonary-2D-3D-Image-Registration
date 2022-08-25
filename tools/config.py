@@ -14,11 +14,11 @@ def get_args(dataset="Dataset/Digital_phantom/"):
     parser.add_argument('--train_DVF_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/DVFs'))
     parser.add_argument('--train_CBCT_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/CTs'))
     parser.add_argument('--real_DRR_folder', type=str, default=os.path.join(root_path, dataset, "Origin/projection"))
-    parser.add_argument('--real_DVF_folder', type=str, default=os.path.join(root_path, dataset, 'origin/DVF'))
-    parser.add_argument('--real_CBCT_folder', type=str, default=os.path.join(root_path, dataset, 'origin/CT'))
-    parser.add_argument('--PCA_dir', type=str, default=os.path.join(root_path, dataset, 'origin/PCA'))
-    parser.add_argument('--val_DRR_folder', type=str,default=os.path.join(root_path, dataset, 'Product_9dvf/VAL/projections'))
-    parser.add_argument("--dvf_trans_pca", type=str, default=os.path.join(root_path, dataset, "origin/DVF_trans_PCA"))
+    parser.add_argument('--real_DVF_folder', type=str, default=os.path.join(root_path, dataset, 'Origin/DVF'))
+    parser.add_argument('--real_CBCT_folder', type=str, default=os.path.join(root_path, dataset, 'Origin/CT'))
+    parser.add_argument('--PCA_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/PCA'))
+    parser.add_argument('--val_DRR_folder', type=str,default=os.path.join(root_path, dataset, 'Origin/projection'))
+    parser.add_argument("--dvf_trans_pca", type=str, default=os.path.join(root_path, dataset, "Origin/DVF_trans_PCA"))
 
     # 超参数
     parser.add_argument('--batch_size', '-b', type=int, default=8, dest='batch_size')
