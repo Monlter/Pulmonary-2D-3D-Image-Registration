@@ -46,24 +46,11 @@ class InstanceExam(ExamTemplate):
 
     def methodsName_combine(self, ):
         if self.model_type == "spaceAndTime":
-            if self.compare_mode == "model_cp":
-                returnstr = self.model_method + "(" + self.input_mode + "_" + self.lossFunction_method + "_pre" + str(
-                    self.preImg_num) + ")"
-            elif self.compare_mode == "inputMode_cp":
-                returnstr = self.input_mode + "(" + self.model_method + "_" + self.lossFunction_method + "_pre" + str(
-                    self.preImg_num) + ")"
-            elif self.compare_mode == "loss_cp":
-                returnstr = self.lossFunction_method + "(" + self.model_method + "_" + self.input_mode + "_pre" + str(
-                    self.preImg_num) + ")"
+            returnstr = self.model_method + "(" + self.input_mode + "_" + self.lossFunction_method + "_pre" + str(self.preImg_num) +")"
             print("modelMethod:", self.model_method, "\tinputMode:", self.input_mode, "\tlossfunction:",
                   self.lossFunction_method, "\tpreImg_num:", self.preImg_num)
         else:
-            if self.compare_mode == "model_cp":
-                returnstr = self.model_method + "(" + self.input_mode + "_" + self.lossFunction_method + ")"
-            elif self.compare_mode == "inputMode_cp":
-                returnstr = self.input_mode + "(" + self.model_method + "_" + self.lossFunction_method + ")"
-            elif self.compare_mode == "loss_cp":
-                returnstr = self.lossFunction_method + "(" + self.model_method + "_" + self.input_mode + ")"
+            returnstr = self.model_method + "(" + self.input_mode + "_" + self.lossFunction_method +")"
             print("modelMethod:", self.model_method, "\tinputMode:", self.input_mode, "\tlossfunction:",
                   self.lossFunction_method)
         return returnstr

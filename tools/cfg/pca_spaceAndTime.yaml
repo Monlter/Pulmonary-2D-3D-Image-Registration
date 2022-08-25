@@ -67,7 +67,7 @@ EXAM_PROCESS:
 #      PREIMG_NUM: 1
 
   - NAME: test_8
-    COMPARE_MODE: model_cp
+    COMPARE_MODE: layer_cp
     INPUT_MODE: origin
     MODEL: ConvLSTMLiner_h100_l2_pC2
     LOSSFUNCTION: MSE
