@@ -98,8 +98,8 @@ def save_ct_split():
 def PCA_train_by_DVFs(path):
     root_path = tool_functions.get_poject_path('Pulmonary-2D-3D-Image-Registration')
     DVF_folder = os.path.join(root_path, path, "Origin/DVF")
-    PCA_train_parameter_folder = os.path.join(root_path, path, "Product_9dvf/DVF_trans_PCAs")
-    PCA_coefficient_folder = os.path.join(root_path, path, "Product_9dvf/PCAs")
+    PCA_train_parameter_folder = os.path.join(root_path, path, "Origin/DVF_trans_PCAs")
+    PCA_coefficient_folder = os.path.join(root_path, path, "Origin/PCAs")
     gen_DVF_folder = os.path.join(root_path, path, "Product_9dvf/DVFs")
 
     args = config.get_args()
@@ -111,9 +111,9 @@ def PCA_train_by_DVFs(path):
     ct_trans_pcas = pca_class.fit_transform(DVFs_arr)
     # 保存PCA相关参数
     tool_functions.file_save(pca_class.components_,
-                             'pca_components_({})'.format(str(pca_class.components_.shape)),
+                             'PCA_components_{}'.format(str(pca_class.components_.shape)),
                              PCA_train_parameter_folder)
-    tool_functions.file_save(pca_class.mean_, 'pca_mean_({})'.format(str(pca_class.mean_.shape)),
+    tool_functions.file_save(pca_class.mean_, 'PCA_mean_{}'.format(str(pca_class.mean_.shape)),
                              PCA_train_parameter_folder)
     for i in range(ct_trans_pcas.shape[0]):
         tool_functions.file_save(ct_trans_pcas[i], "PCA_" + str(i + 1), PCA_coefficient_folder)
@@ -152,48 +152,6 @@ def trans_size(input_path, save_path, shape):
         resize_array.tofile(os.path.join(root_path, save_path, input_name))
         print(input_name, "已经转成功!", shape, "--->", resize_array.shape)
 
-
-def demons_registration():
-    import sys
-    def command_iteration(filter):
-        print(f"{filter.GetElapsedIterations():3} = {filter.GetMetric():10.5f}")
-
-    if len(sys.argv) < 4:
-        print(
-            f"Usage: {sys.argv[0]} <fixedImageFilter> <movingImageFile> <outputTransformFile>")
-        sys.exit(1)
-
-    fixed = sitk.ReadImage(sys.argv[1], sitk.sitkFloat32)
-
-    moving = sitk.ReadImage(sys.argv[2], sitk.sitkFloat32)
-
-    matcher = sitk.HistogramMatchingImageFilter()
-    matcher.SetNumberOfHistogramLevels(1024)
-    matcher.SetNumberOfMatchPoints(7)
-    matcher.ThresholdAtMeanIntensityOn()
-    moving = matcher.Execute(moving, fixed)
-
-    # The basic Demons Registration Filter
-    # Note there is a whole family of Demons Registration algorithms included in
-    # SimpleITK
-    demons = sitk.DemonsRegistrationFilter()
-    demons.SetNumberOfIterations(50)
-    # Standard deviation for Gaussian smoothing of displacement field
-    demons.SetStandardDeviations(1.0)
-
-    demons.AddCommand(sitk.sitkIterationEvent, lambda: command_iteration(demons))
-
-    displacementField = demons.Execute(fixed, moving)
-
-    print("-------")
-    print(f"Number Of Iterations: {demons.GetElapsedIterations()}")
-    print(f" RMS: {demons.GetRMSChange()}")
-
-    outTx = sitk.DisplacementFieldTransform(displacementField)
-
-    sitk.WriteTransform(outTx, sys.argv[3])
-
-
 def bin_trans_png(projection_path, shape):
     root_path = tool_functions.get_poject_path('Pulmonary-2D-3D-Image-Registration')
     projection_list = os.listdir(os.path.join(root_path, projection_path))
@@ -214,7 +172,7 @@ def rename(path):
     file_name_list = os.listdir(path)
     for file_name in file_name_list:
         old_file = os.path.join(path, file_name)
-        new_file = os.path.join(path, file_name.replace("PCA", "pca") + ".bin")
+        new_file = os.path.join(path, file_name.replace("pca", "PCA"))
         os.rename(old_file, new_file)
         print(new_file, "保存成功！")
 
@@ -225,5 +183,5 @@ if __name__ == '__main__':
     # trans_size(input_path='Dataset/Patient/5/Origin/CT', save_path='Dataset/Patient/5/Origin/resize_CT',
     #            shape=(102, 512, 512))
     # bin_trans_png("Dataset/Digital_phantom/Product_9dvf/VAL/projection", shape=(100, 240, 300))
-    rename("Dataset/Patient/5/Origin/PCA")
+    rename("Dataset/Digital_phantom/Origin/PCA")
     pass

@@ -1,8 +1,12 @@
 import argparse
 import torch
-from tools.tool_functions import get_poject_path
 import os
 
+
+def get_poject_path(PROJECT_NAME):
+    project_path = os.path.abspath(os.path.dirname(__file__))
+    root_path = project_path[:project_path.find("{}".format(PROJECT_NAME)) + len("{}".format(PROJECT_NAME))]
+    return root_path
 
 def get_args(dataset="Dataset/Digital_phantom/"):
     root_path = get_poject_path('Pulmonary-2D-3D-Image-Registration')
@@ -10,15 +14,15 @@ def get_args(dataset="Dataset/Digital_phantom/"):
     parser = argparse.ArgumentParser()
     # 路径
     parser.add_argument('--root_path', type=str, default=root_path)
-    parser.add_argument('--train_DRR_dir', type=str,default=os.path.join(root_path, dataset, 'Product_9dvf/projections'))
+    parser.add_argument('--train_DRR_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/projections'))
     parser.add_argument('--train_DVF_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/DVFs'))
-    parser.add_argument('--train_CBCT_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/CTs'))
-    parser.add_argument('--real_DRR_folder', type=str, default=os.path.join(root_path, dataset, "Origin/projection"))
-    parser.add_argument('--real_DVF_folder', type=str, default=os.path.join(root_path, dataset, 'Origin/DVF'))
-    parser.add_argument('--real_CBCT_folder', type=str, default=os.path.join(root_path, dataset, 'Origin/CT'))
-    parser.add_argument('--PCA_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/PCA'))
-    parser.add_argument('--val_DRR_folder', type=str,default=os.path.join(root_path, dataset, 'Origin/projection'))
+    parser.add_argument('--train_CT_dir', type=str, default=os.path.join(root_path, dataset, 'Product_9dvf/CTs'))
+    parser.add_argument('--real_DRR_dir', type=str, default=os.path.join(root_path, dataset, "Origin/projection"))
+    parser.add_argument('--real_DVF_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/DVF'))
+    parser.add_argument('--real_CT_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/CT'))
+    parser.add_argument('--real_PCA_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/PCA'))
     parser.add_argument("--dvf_trans_pca", type=str, default=os.path.join(root_path, dataset, "Origin/DVF_trans_PCA"))
+    parser.add_argument('--val_DRR_dir', type=str, default=os.path.join(root_path, dataset, 'Origin/projection'))
 
     # 超参数
     parser.add_argument('--batch_size', '-b', type=int, default=8, dest='batch_size')
@@ -29,7 +33,7 @@ def get_args(dataset="Dataset/Digital_phantom/"):
     # 实验变量
     parser.add_argument("--preImg_num", type=int, default=1, dest="preImg_num")
     parser.add_argument('--extend_num', type=int, default=120, dest='extend_num')
-    parser.add_argument("--split_num", type=int, default=(153, 300, 300), dest='split_num')
+    parser.add_argument("--split_num", type=int, default=(81, 129, 84), dest='split_num')
 
     # 函数方法
     parser.add_argument('--cam_method', type=str, default='gradcam',

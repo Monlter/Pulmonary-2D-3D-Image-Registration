@@ -14,23 +14,23 @@ class InstanceExam(ExamTemplate):
         self.preImg_num = exam_cfg["PREIMG_NUM"] if "PREIMG_NUM" in exam_cfg else 1
         self.work_fileName = self.methodsName_combine()
         self.inChannel_num = self.get_channelNum()
-        self.log_dir, self.csv_dir, self.tensorboard_dir, self.split_img_dir, self.cur_ckpt_dir = self.init_dir()
+        self.log_dir, self.csv_dir, self.tensorboard_dir, self.split_img_dir, self.cur_ckpt_dir,self.pred_dir = self.init_dir()
 
     def init_dir(self, ):
         log_dir = os.path.join(self.result_dir, self.compare_mode, "log")
         csv_dir = os.path.join(self.result_dir, self.compare_mode, 'csv')
         tensorboard_dir = os.path.join(self.result_dir, self.compare_mode, "run", self.work_fileName)
+        pred_dir = os.path.join(self.result_dir,self.compare_mode,"pred")
         cur_ckpt_dir = os.path.join(self.ckpt_dir, self.compare_mode, self.work_fileName)
+        split_img_dir = os.path.join(self.result_dir, self.compare_mode, 'split_img', self.work_fileName)
         os.makedirs(cur_ckpt_dir, exist_ok=True)
         os.makedirs(log_dir, exist_ok=True)
         os.makedirs(tensorboard_dir, exist_ok=True)
         os.makedirs(csv_dir, exist_ok=True)
+        os.makedirs(pred_dir, exist_ok=True)
+        os.makedirs(split_img_dir, exist_ok=True)
 
-        split_img_dir = None
-        if self.prediction_mode == "CBCT":
-            split_img_dir = os.path.join(self.result_dir, self.compare_mode, 'split_img', self.work_fileName)
-            os.makedirs(split_img_dir, exist_ok=True)
-        return log_dir, csv_dir, tensorboard_dir, split_img_dir, cur_ckpt_dir
+        return log_dir, csv_dir, tensorboard_dir, split_img_dir, cur_ckpt_dir,pred_dir
 
     def get_channelNum(self):
         num = 0

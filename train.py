@@ -3,15 +3,10 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tools.data_loader import Dataset
 from torch.utils.data import DataLoader
 import math
-from tools.loss_tool import PCA_loss, Log_cosh, PCA_smoothL1Loss
-from tools.config import get_args
-import yaml
-from functools import partial
 from tools.instanceExam import InstanceExam
 from tools.tool_functions import *
 from torch.utils.tensorboard import SummaryWriter
-# 加载各类模型
-from Model import *
+from tools.models_init import optional_init
 
 
 def val(Dataset_loader, net, loss_function, device):
@@ -26,63 +21,11 @@ def val(Dataset_loader, net, loss_function, device):
     return (val_loss / (i + 1))
 
 
-def load_cfg(yaml_path):
-    with open(yaml_path, 'r', encoding='utf-8') as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
-        args = get_args(dataset=cfg["DATASET"])
-    return args, cfg
-
-
 def train(args, cfg):
     # 初始化
     exam_process_dict = cfg['EXAM_PROCESS']
+    model_methods, lossfunction_methods = optional_init()
 
-    # 模型方式
-    model_methods = {
-        "CNN": CNN_model.CNN_net,
-        "Unet": partial(Unet_model.UNet_net, n_classes=3),
-        "Resnet": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2]),
-        "Resnet_allSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
-                                 is_outAttention="SPA"),
-        "Resnet_allCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
-                                  is_outAttention="CBAM"),
-        "Resnet_allSE": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
-                                is_outAttention="SE"),
-        "Resnet_inSPA_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
-                                        is_outAttention="CBAM"),
-        "Resnet_inCBAM_outSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
-                                        is_outAttention="SPA"),
-        "Resnet_inCBAM_outSE": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="CBAM",
-                                       is_outAttention="SE"),
-        "Resnet_inSPA_outSE": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SPA",
-                                      is_outAttention="SE"),
-        "Resnet_inSE_outSPA": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
-                                      is_outAttention="SPA"),
-        "Resnet_inSE_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
-                                       is_outAttention="CBAM"),
-        "ConvLSTMLiner_h10_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2),
-        "ConvLSTMLiner_h30_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2),
-        "ConvLSTMLiner_h50_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=50, num_layers=2),
-        "ConvLSTMLiner_h100_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=100, num_layers=2),
-        "ConvLSTMLiner_h10_l4": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=4),
-        "ConvLSTMLiner_h10_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=8),
-        "ConvLSTMLiner_h10_l16": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=16),
-        "ConvLSTMLiner_h30_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=8),
-        "ConvLSTMLiner_h50_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=50, num_layers=8),
-        "ConvLSTMLiner_h100_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=100, num_layers=8),
-        "ConvLSTMLiner_h100_l2_pM2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
-                                            is_pooling=["Maxpool", "2"]),
-        "ConvLSTMLiner_h100_l2_pA2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
-                                            is_pooling=["Avgpool", "2"]),
-        "ConvLSTMLiner_h100_l2_pC2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2,
-                                            is_pooling=["Convpool", "2"]),
-    }
-    # 损失函数方式
-    lossfunction_methods = {
-        "MSE": PCA_loss,
-        "Smooth_MSE": PCA_smoothL1Loss,
-        "log_cosh": Log_cosh
-    }
     setup_seed(12)
     # 超参数设定
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

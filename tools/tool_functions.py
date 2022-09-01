@@ -10,14 +10,22 @@ import cv2
 from tools import data_processing
 import SimpleITK as sitk
 import csv
+import yaml
+from .config import get_args
 
-comparsion_mode = ["model_cp", "data_cp", "heatmap_cp", "lossFunction_cp", "noise_cp"]
+
 
 
 def get_poject_path(PROJECT_NAME):
     project_path = os.path.abspath(os.path.dirname(__file__))
     root_path = project_path[:project_path.find("{}".format(PROJECT_NAME)) + len("{}".format(PROJECT_NAME))]
     return root_path
+
+
+def choose_by_prediction_mode(prediction_mode,choose_list):
+    for choose_item in choose_list:
+        if prediction_mode in choose_item:
+            return choose_item
 
 
 def normalization_2d_img(img, method='max_min'):
@@ -61,7 +69,7 @@ def load_all_file(file_folder, shape=None):
 def load_odd_file(filename, shape=None):
     file_array = np.fromfile(filename, dtype='float32')
     if shape:
-        file_array.reshape(shape)
+        file_array = file_array.reshape(shape)
     return file_array
 
 
@@ -97,11 +105,14 @@ def get_csv(filename, header):
 
 def get_logger(filename, verbosity=1, name=None):
     level_dict = {0: logging.DEBUG, 1: logging.INFO, 2: logging.WARNING}
-    formatter = logging.Formatter(
-        "[%(asctime)s] %(message)s"
-    )
+    # formatter = logging.Formatter(
+    #     "[%(asctime)s] %(message)s"
+    # )
     # %(asctime)s：当前时间
     # %(message)s ：用户输出的消息
+    formatter = logging.Formatter(
+        "%(message)s"
+    )
     logger = logging.getLogger(name)
     logger.setLevel(level_dict[verbosity])
 
@@ -300,6 +311,13 @@ def ImageResample(sitk_image, is_label=False):
 
     newimage = resample.Execute(sitk_image)
     return newimage
+
+
+def load_cfg(yaml_path):
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        cfg = yaml.load(f, Loader=yaml.FullLoader)
+        args = get_args(dataset=cfg["DATASET"])
+    return args, cfg
 
 
 if __name__ == '__main__':

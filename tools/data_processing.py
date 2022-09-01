@@ -116,6 +116,7 @@ def make_subimg(img):
 
 def get_preImgName_sequence(imgName, preImg_num):
     phase_num = 9
+    imgName = imgName.split(".")[0]
     cur_num = int(imgName.split("_")[1])
     init_name = imgName.split("_")[0]
     preImgName_sequence = []
@@ -242,7 +243,7 @@ def readDicomSeries(folder_name):
 
 
 def load_odd_GT(prediction_mode, gt_path, gt_number, data_shape):
-    gt_name = prediction_mode + "_" + gt_number
+    gt_name = prediction_mode + "_" + gt_number + ".bin"
     shape = data_shape[prediction_mode]
     GT = tool_functions.load_odd_file(os.path.join(gt_path, gt_name), shape)
     return GT

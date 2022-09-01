@@ -16,6 +16,7 @@
 #include "orbitz.c"
 #include <string.h>
 
+
 // includes, cuda
 #include <helper_cuda.h>
 #include <helper_timer.h>
@@ -242,58 +243,92 @@ int main(int argc, char* argv[])
 	float*** projection, *** temp, *** h_proj, *** warps, *** CT_deform;
 	float* h_prj2d, * d_temp, * d_prj3d, * d_prj2d, * CT_ref, * x3d, * d_x3d, * x3d_moving, * h_sine, * h_cosin, * h_angle;
 	char* cmd, * projfile1, * anglefile1, * priorimage1, * outfile1;
-	int size[3], dsize1[3],dsize2[3], pos[2];
+	int size[3], dsize[3],dsize2[3], pos[2];
 	float voxelsize, binsize, SID, SOD, L1, L2, VOXSIZE_X, VOXSIZE_Z;
 	int m, DIM, nx, nz, nview, VoxelNum, NPRJ, nview1,nview2, ITNUM, flag, orbitype, i, j, k, n, ii, jj, kk, NI_X, NI_Z;
-	char str_angle_file[100],str_number[3], str_infolder[200], str_outfolder[200], dvf_path[500],ct_path[500],model_class[20],dvf_list[20],str_infilename[60], str_outfilename[60], str_infile[200], str_ct_outfile[500], str_projection_outfile[500];
+	char str_angle_file[100],str_number[3], str_infolder[200], str_outfolder[200], 
+		dvf_path[500],ct_path[500],model_class[20],dvf_list[20],str_infilename[60], 
+		str_outfilename[60], str_infile[200], str_ct_outfile[500], str_projection_outfile[500],
+		DVF_name[300],CT_name[300],Projection_name[300];
 	int datasetr, datasetp;
+	bool save_CT_flag,save_Projection_flag;
 
 
 
 
 	cmd = argv[0];
-	while ((--argc > 0) && ((*++argv)[0] == '-'))
-	{
-		/*std::cout << argv[0]+1 << std::endl;*/
-		if (!strcmp(argv[0] + 1, "size")) GETOPTSIZ(size)   //size :256*256*150
-		else if (!strcmp(argv[0] + 1, "view")) GETOPTINT(nview1)  //nview1:100
-		else if (!strcmp(argv[0] + 1, "voxelsize")) GETOPTFLT(voxelsize)  //voxelsize:1.0
-		else if (!strcmp(argv[0] + 1, "itnum")) GETOPTINT(ITNUM)   //itnum: 30
+	//while ((--argc > 0) && ((*++argv)[0] == '-'))
+	//{
+	//	/*std::cout << argv[0]+1 << std::endl;*/
+	//	if (!strcmp(argv[0] + 1, "size")) GETOPTSIZ(size)   //size :256*256*150
+	//	else if (!strcmp(argv[0] + 1, "view")) GETOPTINT(nview1)  //nview1:100
+	//	else if (!strcmp(argv[0] + 1, "voxelsize")) GETOPTFLT(voxelsize)  //voxelsize:1.0
+	//	else if (!strcmp(argv[0] + 1, "itnum")) GETOPTINT(ITNUM)   //itnum: 30
 
-		else if (!strcmp(argv[0] + 1, "dsize")) GETOPTSIZ(dsize1)  //dsize1:300*240*100
-		else if (!strcmp(argv[0] + 1, "geo"))
-		{
-			SID = atof(argv[1]);  //sid :1500
-			argc--; argv++;
-			SOD = atof(argv[1]);   //sod:1000
-			argc--; argv++;
-		}
-		else usage(cmd);
-	}
+	//	else if (!strcmp(argv[0] + 1, "dsize")) GETOPTSIZ(dsize)  //dsize:300*240*100
+	//	else if (!strcmp(argv[0] + 1, "geo"))
+	//	{
+	//		SID = atof(argv[1]);  //sid :1500
+	//		argc--; argv++;
+	//		SOD = atof(argv[1]);   //sod:1000
+	//		argc--; argv++;
+	//	}
+	//	else usage(cmd);
+	//}
 
-	if (size[0] != size[1])
-	{
-		fprintf(stderr, "%s warning: image must be square\n", cmd);
-		size[1] = size[0];
-	}
+	//if (size[0] != size[1])
+	//{
+	//	fprintf(stderr, "%s warning: image must be square\n", cmd);
+	//	size[1] = size[0];
+	//}
 
-	if (argc != 1)
-		usage(cmd);
-	anglefile1 = argv[0];  
+	//if (argc != 1)
+	//	usage(cmd);
+	//anglefile1 = argv[0];  
+
+
+	// <*************************************************************************************************************************>
+    // 参数 ----> 输入
+	size[0] = 256;
+	size[1] = 256;
+	size[2] = 150;
+	nview1 = 1;
+	voxelsize = 1.0;
+	ITNUM = 30;
+	dsize[0] = 300;
+	dsize[1] = 240;
+	dsize[2] = 1;
+	SID = 750;
+	SOD = 500;
+	char anglefile[] = "new_anglefile_1_angle";
+	char DVF_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\DVF_path.txt";
+	char CT_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\CT_path.txt";
+	char Projection_path_list[] = "";
+	char reference_ct_path[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\phantom_CT_0.bin";
+	save_CT_flag = true;
+	save_Projection_flag = false;
+	// 参数 ----> 结束
+	// 转变方式：
+	// 1. DVF -> CT -> projection (批量)
+	// 2. CT -> projection (批量)
+	// 3. DVF -> CT -> projection (单个)
+	// 4. CT -> projection (单个)
+	// <*************************************************************************************************************************>
+
 
 
 	int voxelNumber = size[0] * size[1] * size[2];
 	int maxits = ITNUM; //30
 	float relax = 0.15;
 	datasetr = size[0] * size[1] * size[2];     //CT数据的尺寸
-	datasetp = dsize1[2] * dsize1[0] * dsize1[1];   //投影数据的尺寸
+	datasetp = dsize[2] * dsize[0] * dsize[1];   //投影数据的尺寸
 	m = 1;
-	nview = dsize1[2];
+	nview = dsize[2];
 	DIM = 3;
 	nx = size[0];
 	nz = size[2];
-	NI_X = dsize1[0];
-	NI_Z = dsize1[1];
+	NI_X = dsize[0];
+	NI_Z = dsize[1];
 	VOXSIZE_X = voxelsize;
 	VOXSIZE_Z = voxelsize;
 
@@ -307,7 +342,7 @@ int main(int argc, char* argv[])
 	//initialize CUBLAS
 
 	printf("Object prior image_1 size: %dx%dx%d\n", size[0], size[1], size[2]);
-	printf("Projection data dsize1: %d x %d x %d\n", dsize1[0], dsize1[1], dsize1[2]);
+	printf("Projection data dsize: %d x %d x %d\n", dsize[0], dsize[1], dsize[2]);
 	printf("view1 = %d, voxelsize = %f, itnum = %d  \n", nview1, voxelsize, ITNUM);
 	printf("SID = %f,   SOD = %f\n", SID, SOD);
 
@@ -323,11 +358,11 @@ int main(int argc, char* argv[])
 	x3d = (float*)alloc1d(3 * voxelNumber, sizeof(float));
 
 	// new added angle....
-	h_angle = (float*)alloc1d(dsize1[2], sizeof(float));
+	h_angle = (float*)alloc1d(dsize[2], sizeof(float));
 
-	h_sine = (float*)alloc1d(dsize1[2], sizeof(float));      // dsize1[2]个投影
+	h_sine = (float*)alloc1d(dsize[2], sizeof(float));      // dsize[2]个投影
 
-	h_cosin = (float*)alloc1d(dsize1[2], sizeof(float));
+	h_cosin = (float*)alloc1d(dsize[2], sizeof(float));
 
 
 	CT_deform = (float***)alloc3d(size[0], size[1], size[2] * m, sizeof(float));
@@ -339,26 +374,26 @@ int main(int argc, char* argv[])
 	CT_ref = (float*)alloc1d(voxelNumber, sizeof(float));
 
 	// allocate host 2d projection memory
-	h_prj2d = (float*)alloc1d(dsize1[0] * dsize1[1], sizeof(float));
+	h_prj2d = (float*)alloc1d(dsize[0] * dsize[1], sizeof(float));
 	// allocate host 3d projection memory
-	h_proj = (float***)alloc3d(dsize1[0], dsize1[1], dsize1[2], sizeof(float));
-	projection = (float***)alloc3d(dsize1[0], dsize1[1], dsize1[2], sizeof(float));
+	h_proj = (float***)alloc3d(dsize[0], dsize[1], dsize[2], sizeof(float));
+	projection = (float***)alloc3d(dsize[0], dsize[1], dsize[2], sizeof(float));
 
 	checkCudaErrors(cudaMalloc((void**)&d_x3d, sizeof(float) * 3 * voxelNumber));
 	checkCudaErrors(cudaMalloc((void**)&d_temp, sizeof(float) * size[0] * size[1] * size[2]));   // 申请 d_temp（3） 内存空间
 	checkCudaErrors(cudaMemset(d_temp, 0, sizeof(float) * size[0] * size[1] * size[2]));
-	checkCudaErrors(cudaMalloc((void**)&d_prj2d, sizeof(float) * dsize1[0] * dsize1[1]));
-	checkCudaErrors(cudaMemset(d_prj2d, 0, sizeof(float) * dsize1[0] * dsize1[1]));
-	checkCudaErrors(cudaMalloc((void**)&d_prj3d, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2]));
-	checkCudaErrors(cudaMemset(d_prj3d, 0, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2]));
+	checkCudaErrors(cudaMalloc((void**)&d_prj2d, sizeof(float) * dsize[0] * dsize[1]));
+	checkCudaErrors(cudaMemset(d_prj2d, 0, sizeof(float) * dsize[0] * dsize[1]));
+	checkCudaErrors(cudaMalloc((void**)&d_prj3d, sizeof(float) * dsize[0] * dsize[1] * dsize[2]));
+	checkCudaErrors(cudaMemset(d_prj3d, 0, sizeof(float) * dsize[0] * dsize[1] * dsize[2]));
 
 
 	// cuda settings
-	int N = dsize1[0] * dsize1[1];  // N:投影图像的尺寸
+	int N = dsize[0] * dsize[1];  // N:投影图像的尺寸
 	dim3 nblocks;
 	nblocks.x = NBLOCKX;                                                 // NBLOCKX:32768
 	nblocks.y = ((1 + (N - 1) / NTHREAD_PER_BLOCK) - 1) / NBLOCKX + 1;   //NTHREAD_PER_BLOCK:128
-	NPRJ = dsize1[2];
+	NPRJ = dsize[2];
 
 
 	printf("size[2] = %d \n", size[2]);
@@ -388,9 +423,9 @@ int main(int argc, char* argv[])
 
 	
 	// projection 用于储存所有的投影
-	for (k = 0; k < dsize1[2]; k++)
-		for (j = 0; j < dsize1[1]; j++)
-			for (i = 0; i < dsize1[0]; i++)
+	for (k = 0; k < dsize[2]; k++)
+		for (j = 0; j < dsize[1]; j++)
+			for (i = 0; i < dsize[0]; i++)
 			{
 				projection[k][j][i] = 1.0;
 				h_proj[k][j][i] = 0.0;
@@ -420,67 +455,80 @@ int main(int argc, char* argv[])
 
 
 
-//********  批量生成  **********************************************************************************************
-	IMGREAD("patient_5_ct_0.bin ", CT_ref, voxelNumber, 0, 1); //读取参考相位的CT
-	std::cout << "CT_ref" << std::endl;
-	IMGREAD(anglefile1, h_angle, dsize1[2], 0, 1);   //  加载投影角度---> h_angle
-	std::cout << "angle" << std::endl;
-	for (i = 0; i < dsize1[2]; i++)
+//******** 1. 批量生成: DVF->CT->projection  ***************************************************************************************
+	IMGREAD(reference_ct_path, CT_ref, voxelNumber, 0, 1); //读取参考相位的CT
+	std::cout << "加载CT_ref" << std::endl;
+	IMGREAD(anglefile, h_angle, dsize[2], 0, 1);   //  加载投影角度---> h_angle
+	std::cout << "加载angle" << std::endl;
+	for (i = 0; i < dsize[2]; i++)
 	{
 		h_angle[i] = h_angle[i] * M_PI / 180;
 		h_sine[i] = sin(h_angle[i] - M_PI);
 		h_cosin[i] = cos(h_angle[i] + M_PI);
 	}
-	//获得文件夹下的文件名称
-	strcpy(str_infolder, "E:\\code\\python\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\5\\Product_9dvf\\resize_CTs\\");
-	strcpy(str_outfolder, "E:\\code\\python\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\5\\Product_9dvf\\");
+
 	//读取文件名
-	FILE* fp1;
-	if (fopen_s(&fp1, "file_name.txt", "r") != 0)
-		std::cout << "加载file_name失败" <<std::endl;
-	while (!feof(fp1))
-	{
-		fgets(str_infilename, sizeof(str_infilename), fp1); //获取文件夹下的所有文件
-		str_infilename[strlen(str_infilename) - 1] = 0;  //去除最后的换行符
-		//// 打开文件名
-		strcpy(str_infile, str_infolder);      
-		strcat(str_infile, str_infilename);   
-		std::cout <<  str_infile << std::endl;
-		// 获取保存文件名
-		strcpy(str_outfilename, str_infilename + 3);
-
-		//// *******生成CT操作*******************************************************
-		//IMGREAD(str_infile, x3d_moving, 3 * voxelNumber, 0, 1);  //读取dvf
-		//transformvolumeGPU(CT_ref, warps[0][0],x3d_moving,size);
-		//////保存转换后的ct
-		//strcpy(str_ct_outfile,str_outfolder);
-		//strcat(str_ct_outfile, "CTs\\CT_");
-		//strcat(str_ct_outfile, str_outfilename);
-		//IMGWRITE(str_ct_outfile, warps[0][0], voxelNumber);    
-		//std::cout << str_ct_outfile << "已经保存" << std::endl;
-
-		 //************进行投影******************************
-
-		IMGREAD(str_infile, warps[0][0], voxelNumber, 0, 1);
-		/*IMGREAD("C:\\Users\\ck\\Desktop\\ct_1_1", warps[0][0], voxelNumber, 0, 1);*/
-		cudaMemcpy(d_temp, warps[0][0], sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
-		cudaMemcpy(temp[0][0],d_temp,sizeof(float)*size[0]*size[1]*size[2],cudaMemcpyDeviceToHost);
-		for (n = 0; n < nview; n++)  // nview:100
-		{
-			sin_value = h_sine[n];
-			cos_value = h_cosin[n];
-			forwardProj2d << <nblocks, NTHREAD_PER_BLOCK >> > (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value,SID,SOD,NI_X,NI_Z);  //投影d_temp（3）到 d_prj2d(2)
-			cudaThreadSynchronize();   //该方法将停止CPU端线程的执行，直到GPU端完成之前CUDA的任务
-			cudaMemcpy(&d_prj3d[n * dsize1[0] * dsize1[1]], d_prj2d, sizeof(float) * dsize1[0] * dsize1[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
-		}
-		cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
-		strcpy(str_projection_outfile, str_outfolder);
-		strcat(str_projection_outfile, "projections\\projection_");
-		strcat(str_projection_outfile, str_outfilename);
-		IMGWRITE(str_projection_outfile, h_proj[0][0], datasetp);
-		std::cout << str_projection_outfile << "投影已经生成" << std::endl;
+	FILE* DVF_list;
+	FILE* CT_list;
+	FILE* Projection_list;
+	if (fopen_s(&DVF_list, DVF_path_list, "r") != 0)
+		std::cout << "加载DVF_path_list.txt失败" << std::endl;
+	if (save_CT_flag) {
+		if (fopen_s(&CT_list, CT_path_list, "r") != 0)
+			std::cout << "加载CT_path_list.txt失败" << std::endl;
 	}
-	fclose(fp1);
+	if (save_Projection_flag) {
+		if (fopen_s(&Projection_list, Projection_path_list, "r") != 0)
+			std::cout << "加载Projection_path_list.txt失败" << std::endl;
+	}
+	
+	while (!feof(DVF_list))
+	{
+		//获取文件夹下的所有文件
+		fgets(DVF_name, sizeof(DVF_name), DVF_list); 
+		//去除最后的换行符
+		DVF_name[strlen(DVF_name) - 1] = 0;
+		std::cout << DVF_name << "已经加载" << std::endl;
+		  
+		
+	
+
+
+		// *******生成CT操作*******************************************************
+		IMGREAD(DVF_name, x3d_moving, 3 * voxelNumber, 0, 1);  //读取dvf
+		transformvolumeGPU(CT_ref, warps[0][0],x3d_moving,size);
+		//保存转换后的ct
+		if (save_CT_flag) {
+			fgets(CT_name, sizeof(CT_name), CT_list);
+			CT_name[strlen(CT_name) - 1] = 0;
+			IMGWRITE(CT_name, warps[0][0], voxelNumber);
+			std::cout << CT_name << "已经保存" << std::endl;
+		}
+		//************进行投影******************************
+		if (save_Projection_flag) {
+			fgets(Projection_name, sizeof(Projection_name), Projection_list);
+			Projection_name[strlen(Projection_name) - 1] = 0;
+			cudaMemcpy(d_temp, warps[0][0], sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
+			cudaMemcpy(temp[0][0], d_temp, sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyDeviceToHost);
+			for (n = 0; n < nview; n++)  // nview:100
+			{
+				sin_value = h_sine[n];
+				cos_value = h_cosin[n];
+				forwardProj2d <<<nblocks, NTHREAD_PER_BLOCK >>> (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value, SID, SOD, NI_X, NI_Z);  //投影d_temp（3）到 d_prj2d(2)
+				cudaThreadSynchronize();   //该方法将停止CPU端线程的执行，直到GPU端完成之前CUDA的任务
+				cudaMemcpy(&d_prj3d[n * dsize[0] * dsize[1]], d_prj2d, sizeof(float) * dsize[0] * dsize[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
+			}
+			cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize[0] * dsize[1] * dsize[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
+			IMGWRITE(Projection_name, h_proj[0][0], datasetp);
+			std::cout << Projection_name << "投影已经生成" << std::endl;
+		}
+		
+	}
+	fclose(DVF_list);
+	if (save_CT_flag)
+		fclose(CT_list);
+	if(save_Projection_flag)
+		fclose(Projection_list);
 
 
 
@@ -536,8 +584,8 @@ int main(int argc, char* argv[])
 // ************ 3. 单独生成投影 ****************************************************
 
 	////读取投影角度
-	//IMGREAD("new_anglefile_100angle", h_angle, dsize1[2], 0, 1);   //  加载投影角度---> h_angle
-	//for (i = 0; i < dsize1[2]; i++)
+	//IMGREAD("new_anglefile_100angle", h_angle, dsize[2], 0, 1);   //  加载投影角度---> h_angle
+	//for (i = 0; i < dsize[2]; i++)
 	//{
 	//	h_angle[i] = h_angle[i] * M_PI / 180;
 	//	h_sine[i] = sin(h_angle[i] - M_PI);
@@ -547,7 +595,7 @@ int main(int argc, char* argv[])
 	//IMGREAD("G:\\Monlter\\PCA\\Dataset\\CT\\4d_lung_phantom_w_lesion_atn_1_shape256_256_150.bin", temp[0][0], voxelNumber, 0, 1);
 	//// forward projection...
 	//cudaMemcpy(d_temp, temp[0][0], sizeof(float) * size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
-	//cudaMemcpy(d_prj3d, projection[0][0], sizeof(float) * dsize1[0] * dsize1[1] * nview, cudaMemcpyHostToDevice);  // 将projection（3） 放在GPU中
+	//cudaMemcpy(d_prj3d, projection[0][0], sizeof(float) * dsize[0] * dsize[1] * nview, cudaMemcpyHostToDevice);  // 将projection（3） 放在GPU中
 	//////////////////////////////////////////
 	//// 2D projection each view...
 	/////////////////////////////////////////
@@ -558,9 +606,9 @@ int main(int argc, char* argv[])
 	//	//printf("sin_value = %f \n",h_sine[n]);
 	//	forwardProj2d << <nblocks, NTHREAD_PER_BLOCK >> > (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value);
 	//	cudaThreadSynchronize();
-	//	cudaMemcpy(&d_prj3d[n * dsize1[0] * dsize1[1]], d_prj2d, sizeof(float) * dsize1[0] * dsize1[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
+	//	cudaMemcpy(&d_prj3d[n * dsize[0] * dsize[1]], d_prj2d, sizeof(float) * dsize[0] * dsize[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
 	//}
-	//cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize1[0] * dsize1[1] * dsize1[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
+	//cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float) * dsize[0] * dsize[1] * dsize[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
 	//IMGWRITE("G:\\Monlter\\PCA\\Dataset\\other\\projection_0_phase", h_proj[0][0], datasetp);
 	//printf("The simulated projection has been saved in: %s\n", str_number);
 
@@ -613,8 +661,8 @@ int main(int argc, char* argv[])
 
 	// *******************  2.根据CT进行投影   生成DRR   *******************************************************************************************
 	////读取投影角度
-	//IMGREAD("new_anglefile_100angle", h_angle, dsize1[2], 0, 1);   //  加载投影角度---> h_angle
-	//for (i = 0; i < dsize1[2]; i++)
+	//IMGREAD("new_anglefile_100angle", h_angle, dsize[2], 0, 1);   //  加载投影角度---> h_angle
+	//for (i = 0; i < dsize[2]; i++)
 	//{
 	//	h_angle[i] = h_angle[i] * M_PI / 180;
 	//	h_sine[i] = sin(h_angle[i] - M_PI);
@@ -635,7 +683,7 @@ int main(int argc, char* argv[])
 	//			
 	//	// forward projection...
 	//	cudaMemcpy(d_temp, temp[0][0], sizeof(float)*size[0] * size[1] * size[2], cudaMemcpyHostToDevice);   // 将 temp（3） 放在GPU中
-	//	cudaMemcpy(d_prj3d, projection[0][0], sizeof(float) * dsize1[0]* dsize1[1] * nview, cudaMemcpyHostToDevice);  // 将projection（3） 放在GPU中
+	//	cudaMemcpy(d_prj3d, projection[0][0], sizeof(float) * dsize[0]* dsize[1] * nview, cudaMemcpyHostToDevice);  // 将projection（3） 放在GPU中
 	//	////////////////////////////////////////
 	//	// 2D projection each view...
 	//	///////////////////////////////////////
@@ -647,11 +695,11 @@ int main(int argc, char* argv[])
 	//		//printf("sin_value = %f \n",h_sine[n]);
 	//		forwardProj2d << <nblocks, NTHREAD_PER_BLOCK >> > (d_prj2d, d_temp, nx, nz, VOXSIZE_X, VOXSIZE_Z, sin_value, cos_value);
 	//		cudaThreadSynchronize();
-	//		cudaMemcpy(&d_prj3d[n * dsize1[0] * dsize1[1]], d_prj2d, sizeof(float)*dsize1[0] * dsize1[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
+	//		cudaMemcpy(&d_prj3d[n * dsize[0] * dsize[1]], d_prj2d, sizeof(float)*dsize[0] * dsize[1], cudaMemcpyDeviceToDevice); //将每个投影d_prj2d(2)放在d_prj3d(3)中
 	//	}
 
-	//	cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float)*dsize1[0] * dsize1[1] * dsize1[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
-	//	printf("projection:%d,%d,%d\n",dsize1[0],dsize1[1],dsize1[2]);
+	//	cudaMemcpy(h_proj[0][0], d_prj3d, sizeof(float)*dsize[0] * dsize[1] * dsize[2], cudaMemcpyDeviceToHost);  // 将d_prj3d(3) 复制到 h_proj(3)中
+	//	printf("projection:%d,%d,%d\n",dsize[0],dsize[1],dsize[2]);
 	//	
 	//	strcpy (str_outfilename,"D:/Dateset/dang/projection/Projection_");
 	//	itoa(i+990,str_number,10);  // itoa()函数把整数转换成字符串，并返回指向转换后的字符串的指针

@@ -3,7 +3,6 @@ from tools.tool_functions import get_poject_path
 
 class ExamTemplate():
     def __init__(self,args,cfg):
-        args.root_path = args.root_path
         self.args = args
         self.cfg = cfg
         self.root_path = args.root_path
