@@ -4,7 +4,7 @@ import os
 
 import torch
 import logging
-
+import time
 import cv2
 # 加载自己库
 
@@ -44,6 +44,8 @@ def exam_test(args, cfg):
                 model.load_state_dict(torch.load(load_model_file))
                 model.to(device)
 
+
+                trainable_params ,total_params = tool_functions.calc_param(model)
                 # 生成log文件
                 logger = tool_functions.get_logger(
                     filename=os.path.join(exam_instance.log_dir, exam_instance.work_fileName + "_test.log"),
@@ -53,7 +55,7 @@ def exam_test(args, cfg):
                 # 生成csv文件
                 csv_writer = tool_functions.get_csv(
                     filename=os.path.join(exam_instance.csv_dir, exam_instance.work_fileName + "_test.csv"),
-                    header=["name"] + estimate_method[exam_instance.prediction_mode])
+                    header=["name","trainable_params","total_params","time"] + estimate_method[exam_instance.prediction_mode])
                 #  保存预测值的路径
                 pred_dir = os.path.join(exam_instance.pred_dir, exam_instance.prediction_mode, exam_instance.work_fileName)
                 os.makedirs(pred_dir, exist_ok=True)
@@ -88,7 +90,10 @@ def exam_test(args, cfg):
                     GT_numpy = data_processing.load_odd_GT(exam_instance.prediction_mode, GT_dir, cur_number,
                                                            exam_instance.data_shape)
                     # 预测
+                    start_time = time.time()
                     prediction = model(input_imgs.to(device))
+                    end_time = time.time()
+                    cost_time = end_time - start_time
                     prediction_numpy = prediction[0].cpu().numpy().astype(np.float32)  # 取出第一个预测值
                     # 保存预测值
                     prediction_numpy.tofile(
@@ -135,6 +140,11 @@ def exam_test(args, cfg):
                     cur_estimate_method_list = estimate_method[exam_instance.prediction_mode]
                     estimate_value_dict.update(
                         data_processing.estimate_calc(GT_numpy, prediction_numpy, cur_estimate_method_list))
+                    estimate_value_dict.update({
+                        "trainable_params": int(trainable_params),
+                        "total_params": int(total_params),
+                        "time":cost_time
+                    })
                     logger.info(estimate_value_dict)
                     csv_writer.writerow(estimate_value_dict)
 

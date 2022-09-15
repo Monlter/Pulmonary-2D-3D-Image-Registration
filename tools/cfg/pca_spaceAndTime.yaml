@@ -66,6 +66,63 @@ EXAM_PROCESS:
     LOSSFUNCTION: MSE
     PREIMG_NUM: 3
 
+  - NAME: test_1
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 1
+
+  - NAME: test_2
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 2
+
+  - NAME: test_3
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 3
+
+  - NAME: test_4
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 4
+
+  - NAME: test_5
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 5
+
+  - NAME: test_6
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 6
+
+  - NAME: test_7
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 7
+
+  - NAME: test_8
+    COMPARE_MODE: preNum_cp
+    INPUT_MODE: origin
+    MODEL: ConvLSTMLiner_h10_l2
+    LOSSFUNCTION: MSE
+    PREIMG_NUM: 8
+
+
 
 
 

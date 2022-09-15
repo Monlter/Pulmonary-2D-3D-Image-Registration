@@ -289,24 +289,25 @@ int main(int argc, char* argv[])
 
 	// <*************************************************************************************************************************>
     // 参数 ----> 输入
-	size[0] = 256;
-	size[1] = 256;
-	size[2] = 150;
+	size[0] = 277;
+	size[1] = 277;
+	size[2] = 158;
 	nview1 = 1;
-	voxelsize = 1.0;
+	voxelsize = 2.0;
 	ITNUM = 30;
-	dsize[0] = 300;
-	dsize[1] = 240;
+	dsize[0] = 512;
+	dsize[1] = 384;
 	dsize[2] = 1;
-	SID = 750;
-	SOD = 500;
+	SID = 1500;
+	SOD = 1000;
+
 	char anglefile[] = "new_anglefile_1_angle";
-	char DVF_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\DVF_path.txt";
-	char CT_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\CT_path.txt";
-	char Projection_path_list[] = "";
-	char reference_ct_path[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Out_result\\spaceAndTime_PCA\\phantom_CT_0.bin";
-	save_CT_flag = true;
-	save_Projection_flag = false;
+	char DVF_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\9\\Product_9dvf\\DVF_path.txt";
+	char CT_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\9\\Product_9dvf\\CT_path.txt";
+	char Projection_path_list[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\9\\Product_9dvf\\projection_path.txt";
+	char reference_ct_path[] = "D:\\Code\\Pycharm\\Pulmonary-2D-3D-Image-Registration\\Dataset\\Patient\\9\\Origin\\CT\\ct_0.bin";
+	save_CT_flag = false;
+	save_Projection_flag = true;
 	// 参数 ----> 结束
 	// 转变方式：
 	// 1. DVF -> CT -> projection (批量)

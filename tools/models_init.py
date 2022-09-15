@@ -6,6 +6,8 @@ def optional_init():
     # 模型方式
     # 模型方式
     model_methods = {
+        "Test1": CNN_model.CNN_net,
+        "Test2": partial(Unet_model.UNet_net, n_classes=3),
         "CNN": CNN_model.CNN_net,
         "Unet": partial(Unet_model.UNet_net, n_classes=3),
         "Resnet": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2]),
@@ -33,15 +35,23 @@ def optional_init():
                                       is_outAttention="SPA"),
         "Resnet_inSE_outCBAM": partial(Resnet_attention.resnet, layers=[2, 2, 2, 2], is_inlineAttention="SE",
                                        is_outAttention="CBAM"),
-
+        "ConvLSTMLiner_h10_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=10, num_layers=2),
+        "ConvLSTMLiner_h20_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=2),
         "ConvLSTMLiner_h30_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2),
+        "ConvLSTMLiner_h40_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=40, num_layers=2),
+        "ConvLSTMLiner_h50_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=50, num_layers=2),
+        "ConvLSTMLiner_h20_l4": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=4),
+        "ConvLSTMLiner_h20_l6": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=6),
+        "ConvLSTMLiner_h20_l8": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=8),
+        "ConvLSTMLiner_h20_l10": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=10),
+
         "ConvLSTMLiner_h30_l2_pA2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2,
                                             is_pooling=["Avgpool", "2"]),
         "ConvLSTMLiner_h30_l2_pC2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2,
                                             is_pooling=["Convpool", "2"]),
         "ConvLSTMLiner_h30_l2_pM2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=30, num_layers=2,
                                             is_pooling=["Maxpool", "2"]),
-        "ConvLSTMLiner_h20_l2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=2),
+
         "ConvLSTMLiner_h20_l2_pA2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=2,
                                             is_pooling=["Avgpool", "2"]),
         "ConvLSTMLiner_h20_l2_pC2": partial(convLSTM_2D.ConvLSTM_Liner, hidden_dim=20, num_layers=2,

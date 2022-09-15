@@ -42,11 +42,10 @@ def exam_extimate(args,cfg):
             os.makedirs(GT_split_img_path,exist_ok=True)
 
         pred_file_suffix = [file_name.split("_")[1] for file_name in os.listdir(pred_PCA_dir)]
-
         # 开始评估：
         for cur_file_suffix in pred_file_suffix:
             cur_number = cur_file_suffix.split(".")[0]
-            print("projection"+cur_number,"-->")
+            print("projection"+cur_number, "-->")
             estimate_value_dict = {"name": "projection"+cur_number}
             for pred_mode in estimate_method:
                 pred_dir = tool_functions.choose_by_prediction_mode(pred_mode,[pred_PCA_dir, pred_CT_dir])
@@ -55,35 +54,41 @@ def exam_extimate(args,cfg):
                 GT_value = tool_functions.load_odd_file(os.path.join(GT_dir, pred_mode+"_"+cur_file_suffix), shape=exam_instance.data_shape[pred_mode])
                 estimate_value_dict.update(
                     data_processing.estimate_calc(GT_value, pred_value, estimate_method[pred_mode]))
+
             logger.info(estimate_value_dict)
             csv_writer.writerow(estimate_value_dict)
 
             if pred_mode == "CT":
                 # 保存切片
-                split_num = args.split_num
+                # split_num = args.split_num
+                #
+                # cor_img = tool_functions.normalization_2d_img(pred_value[split_num[0], :, :]) * 255
+                # sag_img = tool_functions.normalization_2d_img(pred_value[:, split_num[1], :]) * 255
+                # tra_img = tool_functions.normalization_2d_img(pred_value[:, :, split_num[2]]) * 255
+                # cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_cor" + "(" + str(split_num[0]) + ").png"),
+                #            cor_img)
+                # cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_sag" + "(" + str(split_num[1]) + ").png"),
+                #            sag_img)
+                # cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_tra" + "(" + str(split_num[2]) + ").png"),
+                #            tra_img)
+                tool_functions.save_all_split(pred_value,pred_value.shape,split_img_path,str(cur_number),["cor","sag","tra"])
 
-                cor_img = tool_functions.normalization_2d_img(pred_value[split_num[0], :, :]) * 255
-                sag_img = tool_functions.normalization_2d_img(pred_value[:, split_num[1], :]) * 255
-                tra_img = tool_functions.normalization_2d_img(pred_value[:, :, split_num[2]]) * 255
-                cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_cor" + "(" + str(split_num[0]) + ").png"),
-                           cor_img)
-                cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_sag" + "(" + str(split_num[1]) + ").png"),
-                           sag_img)
-                cv2.imwrite(os.path.join(split_img_path, str(cur_number) + "_tra" + "(" + str(split_num[2]) + ").png"),
-                           tra_img)
+
 
                 # 保存GT切片
                 if not save_GT_split_img_flag:
-                    GT_cor_img = tool_functions.normalization_2d_img(GT_value[split_num[0], :, :]) * 255
-                    GT_sag_img = tool_functions.normalization_2d_img(GT_value[:, split_num[1], :]) * 255
-                    GT_tra_img = tool_functions.normalization_2d_img(GT_value[:, :, split_num[2]]) * 255
-                    cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_cor" + "(" + str(split_num[0]) + ").png"),
-                               GT_cor_img)
-                    cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_sag" + "(" + str(split_num[1]) + ").png"),
-                               GT_sag_img)
-                    cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_tra" + "(" + str(split_num[2]) + ").png"),
-                               GT_tra_img)
-                    save_GT_split_img_flag = True
+                    # GT_cor_img = tool_functions.normalization_2d_img(GT_value[split_num[0], :, :]) * 255
+                    # GT_sag_img = tool_functions.normalization_2d_img(GT_value[:, split_num[1], :]) * 255
+                    # GT_tra_img = tool_functions.normalization_2d_img(GT_value[:, :, split_num[2]]) * 255
+                    # cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_cor" + "(" + str(split_num[0]) + ").png"),
+                    #            GT_cor_img)
+                    # cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_sag" + "(" + str(split_num[1]) + ").png"),
+                    #            GT_sag_img)
+                    # cv2.imwrite(os.path.join(GT_split_img_path, str(cur_number) + "_tra" + "(" + str(split_num[2]) + ").png"),
+                    #            GT_tra_img)
+                    tool_functions.save_all_split(GT_value, pred_value.shape, GT_split_img_path, str(cur_number),
+                                                  ["cor", "sag", "tra"])
+        save_GT_split_img_flag = True
 
 
 

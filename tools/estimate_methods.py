@@ -21,9 +21,9 @@ def MAE(real, predict):
     predict_copy = np.copy(predict)
     if (len(real_copy.shape) == 3):
         MAE_error_sum = 0
-        for i in range(real_copy.shape[2]):
-            MAE_error_sum += mean_absolute_error(real_copy[:, :, i], predict_copy[:, :, i])
-        MAE_error = MAE_error_sum / real_copy.shape[2]
+        for i in range(real_copy.shape[0]):
+            MAE_error_sum += mean_absolute_error(real_copy[i,:, :], predict_copy[i,:, :])
+        MAE_error = MAE_error_sum / real_copy.shape[0]
     else:
         MAE_error = mean_absolute_error(real_copy, predict_copy)
     return MAE_error
@@ -34,9 +34,9 @@ def MAE_percentage(real, predict):
     predict_copy = np.copy(predict)
     if (len(real_copy.shape) == 3):
         MAE_precentage_sum = 0
-        for i in range(real_copy.shape[2]):
-            MAE_precentage_sum += mean_absolute_percentage_error(real_copy[:, :, i], predict_copy[:, :, i])
-        MAE_precentage = MAE_precentage_sum / real_copy.shape[2]
+        for i in range(real_copy.shape[0]):
+            MAE_precentage_sum += mean_absolute_percentage_error(real_copy[i, :, :], predict_copy[i, :, :])
+        MAE_precentage = MAE_precentage_sum / real_copy.shape[0]
     else:
         MAE_precentage = mean_absolute_percentage_error(real_copy, predict_copy)
     return MAE_precentage
